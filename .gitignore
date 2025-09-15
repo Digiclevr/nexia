@@ -41,4 +41,13 @@ Thumbs.db
 
 # Temporary files
 *.tmp
-*.temp
+*.temp# Documentation et logs - INTERDITS sur GitHub
+*.txt
+*.md
+*.log
+*.doc
+*.docx
+*.pdf
+Historiques_sessions_terminal/
+README*
+*.rtf
