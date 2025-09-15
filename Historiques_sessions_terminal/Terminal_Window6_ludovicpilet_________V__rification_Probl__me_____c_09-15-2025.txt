@@ -1,5 +1,5 @@
 === SAUVEGARDE FENÊTRE TERMINAL 6 ===
-Date: Mon Sep 15 21:47:21 CEST 2025
+Date: Mon Sep 15 22:02:36 CEST 2025
 Application: Terminal.app
 Fenêtre: 6/15
 Nom de fenêtre: ludovicpilet — ✳ Vérification Problème — claude TMPDIR=/var/folders/66/5b4kr9n55bjgr7gsb6p38w0w0000gn/T/ ▸ esbuild — 183×38
@@ -63,7 +63,7 @@ quit
 exit
 
 === PROCESSUS TERMINAL ACTIFS ===
-ludovicpilet      1353   1.0  0.9 413011040 218160   ??  S    Sun11AM  62:05.38 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
+ludovicpilet      1353   8.7  0.9 413023632 227760   ??  S    Sun11AM  62:16.52 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
 
 === VARIABLES D'ENVIRONNEMENT COURANTES ===
 USER: ludovicpilet

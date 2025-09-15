@@ -39,7 +39,7 @@ export default function VoicePage() {
   // Fetch voice session data
   const { data: voiceData, isLoading } = useQuery({
     queryKey: ['voice-data'],
-    queryFn: () => nexiaApi.fetchVoiceData(),
+    queryFn: () => nexiaApi.fetchStatus(),
     refetchInterval: 5000,
     retry: 3,
     retryDelay: 1000

@@ -25,7 +25,7 @@ export default function AlertsPage() {
   // Fetch alerts data
   const { data: alertsData, isLoading } = useQuery({
     queryKey: ['alerts-data'],
-    queryFn: () => nexiaApi.fetchAlertsData(),
+    queryFn: () => nexiaApi.fetchActiveAlerts(),
     refetchInterval: 5000,
     retry: 3,
     retryDelay: 1000

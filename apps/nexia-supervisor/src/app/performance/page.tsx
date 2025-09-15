@@ -27,7 +27,7 @@ export default function PerformancePage() {
   // Fetch performance data
   const { data: performanceData, isLoading } = useQuery({
     queryKey: ['performance-data'],
-    queryFn: () => nexiaApi.fetchPerformanceData(),
+    queryFn: () => nexiaApi.fetchMetrics(),
     refetchInterval: 10000,
     retry: 3,
     retryDelay: 1000
