@@ -43,7 +43,7 @@ export const nexiaApi = {
       const data = await response.json();
       
       // Transform ecosystem data to expected format
-      const ecosystemStatus = {};
+      const ecosystemStatus: any = {};
       if (data.ecosystems) {
         data.ecosystems.forEach((eco: any) => {
           const name = eco.name.toLowerCase().replace(/[^a-z0-9]/g, '_');

@@ -1,5 +1,5 @@
 === SAUVEGARDE FENÊTRE TERMINAL 9 ===
-Date: Mon Sep 15 22:17:49 CEST 2025
+Date: Mon Sep 15 22:33:00 CEST 2025
 Application: Terminal.app
 Fenêtre: 9/15
 Nom de fenêtre: ludovicpilet — ✳ Message Length — claude TMPDIR=/var/folders/66/5b4kr9n55bjgr7gsb6p38w0w0000gn/T/ — 183×38
@@ -63,7 +63,7 @@ quit
 exit
 
 === PROCESSUS TERMINAL ACTIFS ===
-ludovicpilet      1353   0.7  0.9 413022832 215792   ??  S    Sun11AM  62:53.24 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
+ludovicpilet      1353   0.4  0.8 413000672 208576   ??  S    Sun11AM  63:08.02 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
 
 === VARIABLES D'ENVIRONNEMENT COURANTES ===
 USER: ludovicpilet
