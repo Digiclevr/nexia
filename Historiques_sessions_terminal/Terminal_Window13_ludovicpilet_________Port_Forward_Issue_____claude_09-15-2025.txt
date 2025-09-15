@@ -1,5 +1,5 @@
 === SAUVEGARDE FENÊTRE TERMINAL 13 ===
-Date: Mon Sep 15 22:02:40 CEST 2025
+Date: Mon Sep 15 22:17:51 CEST 2025
 Application: Terminal.app
 Fenêtre: 13/15
 Nom de fenêtre: ludovicpilet — ✳ Port Forward Issue — claude TMPDIR=/var/folders/66/5b4kr9n55bjgr7gsb6p38w0w0000gn/T/ — 183×38
@@ -63,7 +63,7 @@ quit
 exit
 
 === PROCESSUS TERMINAL ACTIFS ===
-ludovicpilet      1353   1.0  0.9 413023632 227872   ??  S    Sun11AM  62:16.70 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
+ludovicpilet      1353   0.4  0.9 413022768 215776   ??  S    Sun11AM  62:53.26 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
 
 === VARIABLES D'ENVIRONNEMENT COURANTES ===
 USER: ludovicpilet
