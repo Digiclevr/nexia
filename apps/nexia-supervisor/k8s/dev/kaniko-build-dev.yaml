@@ -55,7 +55,6 @@ spec:
         - "--dockerfile=/workspace/nexia/apps/nexia-supervisor/Dockerfile"
         - "--context=/workspace/nexia/apps/nexia-supervisor"
         - "--destination=registry.digitalocean.com/blueocean/nexia-supervisor:dev-latest"
-        - "--destination=registry.digitalocean.com/blueocean/nexia-supervisor:dev-$(date +%Y%m%d-%H%M%S)"
         - "--cache=true"
         - "--cache-repo=registry.digitalocean.com/blueocean/nexia-supervisor-cache"
         - "--compressed-caching=false"

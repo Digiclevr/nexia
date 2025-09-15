@@ -1,5 +1,5 @@
 === SAUVEGARDE FENÊTRE TERMINAL 10 ===
-Date: Mon Sep 15 21:16:50 CEST 2025
+Date: Mon Sep 15 21:47:24 CEST 2025
 Application: Terminal.app
 Fenêtre: 10/15
 Nom de fenêtre: ludovicpilet — 🤖 Claude OnlyOneAPI DevOps — -zsh — 183×38
@@ -63,7 +63,7 @@ quit
 exit
 
 === PROCESSUS TERMINAL ACTIFS ===
-ludovicpilet      1353  14.9  0.9 413010736 221376   ??  S    Sun11AM  61:49.67 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
+ludovicpilet      1353   0.8  0.9 413011040 218208   ??  S    Sun11AM  62:05.41 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
 
 === VARIABLES D'ENVIRONNEMENT COURANTES ===
 USER: ludovicpilet

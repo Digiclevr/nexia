@@ -1,5 +1,5 @@
 === SAUVEGARDE FENÊTRE TERMINAL 4 ===
-Date: Mon Sep 15 21:16:41 CEST 2025
+Date: Mon Sep 15 21:47:20 CEST 2025
 Application: Terminal.app
 Fenêtre: 4/15
 Nom de fenêtre: ludovicpilet — ✳ Status Check — claude TMPDIR=/var/folders/66/5b4kr9n55bjgr7gsb6p38w0w0000gn/T/ ▸ next-server (v15.5.3) — 183×38
@@ -63,7 +63,7 @@ quit
 exit
 
 === PROCESSUS TERMINAL ACTIFS ===
-ludovicpilet      1353   9.8  0.9 412999680 216720   ??  S    Sun11AM  61:49.01 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
+ludovicpilet      1353   0.9  0.9 413011040 218160   ??  S    Sun11AM  62:05.37 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
 
 === VARIABLES D'ENVIRONNEMENT COURANTES ===
 USER: ludovicpilet

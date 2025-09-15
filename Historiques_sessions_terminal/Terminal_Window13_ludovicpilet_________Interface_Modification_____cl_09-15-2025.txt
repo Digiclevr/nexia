@@ -1,5 +1,5 @@
 === SAUVEGARDE FENÊTRE TERMINAL 13 ===
-Date: Mon Sep 15 21:16:54 CEST 2025
+Date: Mon Sep 15 21:47:30 CEST 2025
 Application: Terminal.app
 Fenêtre: 13/15
 Nom de fenêtre: ludovicpilet — ✳ Interface Modification — claude TMPDIR=/var/folders/66/5b4kr9n55bjgr7gsb6p38w0w0000gn/T/ ▸ kubectl — 183×38
@@ -63,7 +63,7 @@ quit
 exit
 
 === PROCESSUS TERMINAL ACTIFS ===
-ludovicpilet      1353   1.5  0.9 413021792 221072   ??  S    Sun11AM  61:49.90 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
+ludovicpilet      1353   0.9  0.9 412999616 217968   ??  S    Sun11AM  62:05.43 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
 
 === VARIABLES D'ENVIRONNEMENT COURANTES ===
 USER: ludovicpilet
