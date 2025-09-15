@@ -33,7 +33,7 @@ export default function EcosystemsPage() {
   const ecosystems = [
     {
       name: 'BlueOcean',
-      status: health.blueocean || 'unknown',
+      status: (health as any)?.blueocean || 'unknown',
       description: 'NEXTSTEP, NEXTGEN, KREACH, KVIBE',
       url: 'nextstep-api.nextstep.svc.cluster.local',
       services: 15,
@@ -44,7 +44,7 @@ export default function EcosystemsPage() {
     },
     {
       name: 'OnlyOneAPI',
-      status: health.onlyoneapi || 'unknown',
+      status: (health as any)?.onlyoneapi || 'unknown',
       description: 'SaaS B2B Platform - 4 sites web',
       url: 'api.onlyoneapi.com',
       services: 8,
@@ -55,7 +55,7 @@ export default function EcosystemsPage() {
     },
     {
       name: 'Business-Automation',
-      status: health.business_automation || 'unknown',
+      status: (health as any)?.business_automation || 'unknown',
       description: 'Agents autonomes 24/7',
       url: 'business-automation.platform.svc.cluster.local',
       services: 12,
@@ -66,7 +66,7 @@ export default function EcosystemsPage() {
     },
     {
       name: 'Claude Code 24/7',
-      status: health.claude_code || 'unknown',
+      status: (health as any)?.claude_code || 'unknown',
       description: 'Agent Claude supervision technique',
       url: 'claude-agent.nexia.local',
       services: 3,
