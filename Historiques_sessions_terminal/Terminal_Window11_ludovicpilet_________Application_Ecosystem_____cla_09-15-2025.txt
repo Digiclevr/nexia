@@ -1,8 +1,8 @@
-=== SAUVEGARDE FENÊTRE TERMINAL 6 ===
-Date: Mon Sep 15 22:48:12 CEST 2025
+=== SAUVEGARDE FENÊTRE TERMINAL 11 ===
+Date: Mon Sep 15 22:48:17 CEST 2025
 Application: Terminal.app
-Fenêtre: 6/15
-Nom de fenêtre: ludovicpilet — ✳ Vérification Problème — claude TMPDIR=/var/folders/66/5b4kr9n55bjgr7gsb6p38w0w0000gn/T/ ▸ esbuild — 183×38
+Fenêtre: 11/15
+Nom de fenêtre: ludovicpilet — ✳ Application Ecosystem — claude TMPDIR=/var/folders/66/5b4kr9n55bjgr7gsb6p38w0w0000gn/T/ ▸ node — 183×38
 Nombre d'onglets: 1
 ======================================
 
@@ -63,7 +63,7 @@ quit
 exit
 
 === PROCESSUS TERMINAL ACTIFS ===
-ludovicpilet      1353   5.7  0.6 413024192 139872   ??  S    Sun11AM  63:25.71 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
+ludovicpilet      1353   4.7  0.6 413024560 140480   ??  S    Sun11AM  63:26.11 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
 
 === VARIABLES D'ENVIRONNEMENT COURANTES ===
 USER: ludovicpilet

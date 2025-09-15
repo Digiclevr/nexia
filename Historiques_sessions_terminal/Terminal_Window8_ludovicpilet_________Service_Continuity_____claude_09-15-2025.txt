@@ -1,5 +1,5 @@
 === SAUVEGARDE FENÊTRE TERMINAL 8 ===
-Date: Mon Sep 15 22:33:00 CEST 2025
+Date: Mon Sep 15 22:48:15 CEST 2025
 Application: Terminal.app
 Fenêtre: 8/15
 Nom de fenêtre: ludovicpilet — ✳ Service Continuity — claude TMPDIR=/var/folders/66/5b4kr9n55bjgr7gsb6p38w0w0000gn/T/ — 183×38
@@ -63,7 +63,7 @@ quit
 exit
 
 === PROCESSUS TERMINAL ACTIFS ===
-ludovicpilet      1353   0.5  0.8 413000672 208576   ??  S    Sun11AM  63:08.02 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
+ludovicpilet      1353   8.8  0.6 413024560 140016   ??  S    Sun11AM  63:25.96 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
 
 === VARIABLES D'ENVIRONNEMENT COURANTES ===
 USER: ludovicpilet

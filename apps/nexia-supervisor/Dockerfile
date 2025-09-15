@@ -14,8 +14,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build Next.js (skip lint for deployment speed)
-RUN npm run build -- --no-lint
+# Build Next.js
+RUN npm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner

@@ -1,5 +1,5 @@
 === SAUVEGARDE FENÊTRE TERMINAL 12 ===
-Date: Mon Sep 15 21:47:29 CEST 2025
+Date: Mon Sep 15 22:48:19 CEST 2025
 Application: Terminal.app
 Fenêtre: 12/15
 Nom de fenêtre: ludovicpilet — ✳ Impression problème — claude TMPDIR=/var/folders/66/5b4kr9n55bjgr7gsb6p38w0w0000gn/T/ ▸ sleep — 183×38
@@ -63,7 +63,7 @@ quit
 exit
 
 === PROCESSUS TERMINAL ACTIFS ===
-ludovicpilet      1353   0.3  0.9 412999616 217968   ??  S    Sun11AM  62:05.43 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
+ludovicpilet      1353   5.5  0.5 413024160 138192   ??  S    Sun11AM  63:26.21 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
 
 === VARIABLES D'ENVIRONNEMENT COURANTES ===
 USER: ludovicpilet
