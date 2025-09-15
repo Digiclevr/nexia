@@ -329,7 +329,7 @@ export default function DashboardPage() {
             <h3 className="text-lg font-medium text-gray-900 mb-4">⚠️ Points d'Attention</h3>
             <div className="space-y-3">
               {alerts.length > 0 ? (
-                alerts.slice(0, 3).map((alert) => (
+                alerts.slice(0, 3).map((alert: any) => (
                   <div 
                     key={alert.id} 
                     className={`p-3 rounded-lg border ${
