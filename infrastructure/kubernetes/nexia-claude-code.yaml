@@ -1,0 +1,129 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexia-claude-code
+  namespace: nexia-prod
+  labels:
+    app: nexia-claude-code
+    component: agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nexia-claude-code
+  template:
+    metadata:
+      labels:
+        app: nexia-claude-code
+    spec:
+      containers:
+      - name: nexia-claude-code
+        image: registry.digitalocean.com/onlyoneapi/nexia-claude-code:latest
+        ports:
+        - containerPort: 7013
+        env:
+        - name: PORT
+          value: "7013"
+        - name: AGENT_ID
+          value: "nexia-claude-k8s"
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: nexia-config
+              key: NODE_ENV
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: nexia-config
+              key: LOG_LEVEL
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: nexia-config
+              key: DATABASE_URL
+        - name: REDIS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: nexia-config
+              key: REDIS_URL
+        - name: NEXIA_SUPERVISOR_URL
+          valueFrom:
+            configMapKeyRef:
+              name: nexia-config
+              key: NEXIA_SUPERVISOR_URL
+        - name: AGENT_MODE
+          valueFrom:
+            configMapKeyRef:
+              name: nexia-config
+              key: AGENT_MODE
+        - name: MEMORY_THRESHOLD
+          valueFrom:
+            configMapKeyRef:
+              name: nexia-config
+              key: MEMORY_THRESHOLD
+        - name: CPU_THRESHOLD
+          valueFrom:
+            configMapKeyRef:
+              name: nexia-config
+              key: CPU_THRESHOLD
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 7013
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 7013
+          initialDelaySeconds: 10
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexia-claude-code-service
+  namespace: nexia-prod
+spec:
+  selector:
+    app: nexia-claude-code
+  ports:
+  - protocol: TCP
+    port: 8013
+    targetPort: 7013
+  type: ClusterIP
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nexia-claude-code-hpa
+  namespace: nexia-prod
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nexia-claude-code
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

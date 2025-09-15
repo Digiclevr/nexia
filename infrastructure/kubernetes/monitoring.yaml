@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ServiceMonitor
+metadata:
+  name: nexia-monitoring
+  namespace: nexia-prod
+  labels:
+    app: nexia-ecosystem
+spec:
+  selector:
+    matchLabels:
+      monitoring: "enabled"
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexia-metrics
+  namespace: nexia-prod
+  labels:
+    app: nexia-metrics
+    monitoring: "enabled"
+spec:
+  ports:
+  - name: http
+    port: 9090
+    targetPort: 9090
+  selector:
+    app: nexia-claude-code
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: nexia-alerts
+  namespace: nexia-prod
+  labels:
+    app: nexia-ecosystem
+spec:
+  groups:
+  - name: nexia.rules
+    rules:
+    - alert: NexiaAgentDown
+      expr: up{job="nexia-claude-code"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        service: nexia-claude-code
+      annotations:
+        summary: "NEXIA Claude Code Agent is down"
+        description: "NEXIA Claude Code Agent has been down for more than 1 minute"
+    
+    - alert: NexiaSupervisorDown  
+      expr: up{job="nexia-supervisor"} == 0
+      for: 2m
+      labels:
+        severity: critical
+        service: nexia-supervisor
+      annotations:
+        summary: "NEXIA Supervisor is down"
+        description: "NEXIA Supervisor has been down for more than 2 minutes"
+    
+    - alert: NexiaHighMemoryUsage
+      expr: container_memory_usage_bytes{container="nexia-claude-code"} / container_spec_memory_limit_bytes > 0.85
+      for: 5m
+      labels:
+        severity: warning
+        service: nexia-claude-code
+      annotations:
+        summary: "NEXIA Agent high memory usage"
+        description: "NEXIA Claude Code Agent memory usage is above 85%"
+    
+    - alert: NexiaHighCPUUsage
+      expr: rate(container_cpu_usage_seconds_total{container="nexia-claude-code"}[5m]) > 0.8
+      for: 5m
+      labels:
+        severity: warning
+        service: nexia-claude-code
+      annotations:
+        summary: "NEXIA Agent high CPU usage"
+        description: "NEXIA Claude Code Agent CPU usage is above 80%"
+    
+    - alert: NexiaResponseTimeHigh
+      expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{service="nexia-supervisor"}[5m])) > 2
+      for: 3m
+      labels:
+        severity: warning
+        service: nexia-supervisor
+      annotations:
+        summary: "NEXIA Supervisor slow response time"
+        description: "95th percentile response time is above 2 seconds"

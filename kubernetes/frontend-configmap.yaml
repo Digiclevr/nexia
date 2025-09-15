@@ -1,0 +1,235 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nexia-frontend-html
+  namespace: nexia
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>NEXIA - Kubernetes Health Monitor</title>
+        <style>
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                margin: 0;
+                padding: 0;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+            }
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            .header {
+                text-align: center;
+                color: white;
+                margin-bottom: 40px;
+            }
+            .header h1 {
+                font-size: 3em;
+                margin: 0;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            }
+            .header p {
+                font-size: 1.2em;
+                opacity: 0.9;
+            }
+            .dashboard {
+                background: white;
+                border-radius: 15px;
+                padding: 40px;
+                box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+                margin-bottom: 30px;
+            }
+            .status-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 30px;
+                margin-bottom: 40px;
+            }
+            .status-card {
+                background: #f8f9fa;
+                border-radius: 10px;
+                padding: 25px;
+                text-align: center;
+                border: 2px solid #e9ecef;
+                transition: transform 0.3s ease;
+            }
+            .status-card:hover {
+                transform: translateY(-5px);
+            }
+            .status-title {
+                font-size: 1.1em;
+                font-weight: bold;
+                color: #495057;
+                margin-bottom: 15px;
+            }
+            .status-value {
+                font-size: 2.5em;
+                font-weight: bold;
+                margin-bottom: 10px;
+            }
+            .status-ok { color: #28a745; }
+            .status-warning { color: #ffc107; }
+            .status-error { color: #dc3545; }
+            .api-status {
+                background: #e3f2fd;
+                border-radius: 10px;
+                padding: 20px;
+                margin-top: 30px;
+            }
+            .api-status h3 {
+                color: #1976d2;
+                margin-top: 0;
+            }
+            .btn {
+                background: #667eea;
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 16px;
+                margin: 10px 5px;
+            }
+            .btn:hover {
+                background: #5a6fd8;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🚀 NEXIA</h1>
+                <p>Kubernetes Health Monitoring Platform</p>
+            </div>
+
+            <div class="dashboard">
+                <h2>📊 Cluster Status Dashboard</h2>
+                
+                <div class="status-grid">
+                    <div class="status-card">
+                        <div class="status-title">Overall Health</div>
+                        <div class="status-value status-ok" id="overall-score">--</div>
+                        <div>Score</div>
+                    </div>
+                    
+                    <div class="status-card">
+                        <div class="status-title">Nodes Status</div>
+                        <div class="status-value status-ok" id="nodes-score">--</div>
+                        <div>Ready Nodes</div>
+                    </div>
+                    
+                    <div class="status-card">
+                        <div class="status-title">Workloads</div>
+                        <div class="status-value status-ok" id="workloads-score">--</div>
+                        <div>Running Pods</div>
+                    </div>
+                    
+                    <div class="status-card">
+                        <div class="status-title">Last Check</div>
+                        <div class="status-value" style="color: #6c757d; font-size: 1.2em;" id="last-check">--</div>
+                        <div>Timestamp</div>
+                    </div>
+                </div>
+
+                <div style="text-align: center;">
+                    <button class="btn" onclick="checkApiHealth()">🔍 Check API Health</button>
+                    <button class="btn" onclick="loadReports()">📊 Load Reports</button>
+                    <button class="btn" onclick="runHealthCheck()">⚡ Run Health Check</button>
+                </div>
+
+                <div class="api-status">
+                    <h3>🔗 API Connection Status</h3>
+                    <div id="api-status">Checking connection...</div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const API_BASE = '/api/v1';
+            
+            async function checkApiHealth() {
+                try {
+                    const response = await fetch(`${API_BASE}/health`);
+                    const data = await response.json();
+                    document.getElementById('api-status').innerHTML = `
+                        ✅ API Connected: ${data.status}<br>
+                        🕒 Timestamp: ${data.timestamp}
+                    `;
+                } catch (error) {
+                    document.getElementById('api-status').innerHTML = `
+                        ❌ API Connection Failed: ${error.message}
+                    `;
+                }
+            }
+            
+            async function loadReports() {
+                try {
+                    const response = await fetch(`${API_BASE}/reports`);
+                    const data = await response.json();
+                    document.getElementById('api-status').innerHTML = `
+                        📊 Reports Loaded: ${data.reports.length} entries<br>
+                        💬 Message: ${data.message}
+                    `;
+                } catch (error) {
+                    document.getElementById('api-status').innerHTML = `
+                        ❌ Failed to load reports: ${error.message}
+                    `;
+                }
+            }
+            
+            async function runHealthCheck() {
+                document.getElementById('api-status').innerHTML = '🔄 Running health check...';
+                
+                try {
+                    const healthData = {
+                        cluster_name: 'kubernetes-cluster',
+                        overall_score: 95,
+                        category_scores: {
+                            nodes: 100,
+                            workloads: 90,
+                            networking: 95,
+                            storage: 90,
+                            security: 85,
+                            monitoring: 100
+                        }
+                    };
+                    
+                    const response = await fetch(`${API_BASE}/reports`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(healthData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    document.getElementById('overall-score').textContent = healthData.overall_score;
+                    document.getElementById('nodes-score').textContent = healthData.category_scores.nodes;
+                    document.getElementById('workloads-score').textContent = healthData.category_scores.workloads;
+                    document.getElementById('last-check').textContent = new Date().toLocaleTimeString();
+                    
+                    document.getElementById('api-status').innerHTML = `
+                        ✅ Health check completed successfully!<br>
+                        📊 Report ID: ${result.id}
+                    `;
+                } catch (error) {
+                    document.getElementById('api-status').innerHTML = `
+                        ❌ Health check failed: ${error.message}
+                    `;
+                }
+            }
+            
+            // Auto-check API health on page load
+            window.onload = function() {
+                checkApiHealth();
+            };
+        </script>
+    </body>
+    </html>

@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexia-supervisor
+  namespace: nexia
+  labels:
+    app: nexia-supervisor
+    component: web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nexia-supervisor
+  template:
+    metadata:
+      labels:
+        app: nexia-supervisor
+        component: web
+    spec:
+      containers:
+      - name: nexia-supervisor
+        image: registry.digitalocean.com/blueocean/nexia-supervisor:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: NEXIA_API_URL
+          value: "http://nexia-api.nexia.svc.cluster.local:8000"
+        - name: DATABASE_URL
+          value: "postgresql://nexia:nexia_password@postgres-central.platform.svc.cluster.local:5432/nexia_supervisor"
+        - name: REDIS_URL
+          value: "redis://platform-pool-redis-master.platform.svc.cluster.local:6379"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexia-supervisor
+  namespace: nexia
+  labels:
+    app: nexia-supervisor
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: nexia-supervisor

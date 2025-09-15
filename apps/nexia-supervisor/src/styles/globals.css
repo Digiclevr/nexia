@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+@layer components {
+  .nexia-card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+  }
+  
+  .nexia-btn-primary {
+    @apply bg-nexia-primary hover:bg-nexia-secondary text-white font-medium py-2 px-4 rounded-lg transition-colors;
+  }
+  
+  .nexia-btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 text-gray-900 font-medium py-2 px-4 rounded-lg transition-colors;
+  }
+  
+  .nexia-status-dot {
+    @apply w-3 h-3 rounded-full;
+  }
+  
+  .nexia-status-online {
+    @apply bg-nexia-success;
+  }
+  
+  .nexia-status-offline {
+    @apply bg-nexia-error;
+  }
+  
+  .nexia-status-warning {
+    @apply bg-nexia-warning;
+  }
+}

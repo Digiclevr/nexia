@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nextstep
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nexia-config
+  namespace: nextstep
+data:
+  AI_CORE_PORT: "6000"
+  API_PORT: "6001"
+  WEBSOCKET_PORT: "6002"
+  FRONTEND_PORT: "6003"
+  NEXIA_DEFAULT_MODE: "focus_guardian"
+  NEXIA_SESSION_TIMEOUT: "3600"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nexia-secrets
+  namespace: nextstep
+type: Opaque
+stringData:
+  database-url: "postgresql://nexia:password@postgres-service.platform:5432/nexia"
+  redis-url: "redis://redis-service.platform:6379/0"
+  jwt-secret: "your-secret-key-here"
+  openai-api-key: ""
+  anthropic-api-key: ""
+  gemini-api-key: ""
+  perplexity-api-key: ""

@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexia-frontend
+  namespace: nextstep
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nexia-frontend
+  template:
+    metadata:
+      labels:
+        app: nexia-frontend
+    spec:
+      nodeSelector:
+        node-pool: applications
+      tolerations:
+      - key: "node-pool"
+        operator: "Equal"
+        value: "applications"
+        effect: "NoSchedule"
+      containers:
+      - name: frontend
+        image: nexia/frontend:latest
+        ports:
+        - containerPort: 6003
+        env:
+        - name: VITE_API_URL
+          value: "http://nexia-ai-core-service:6000"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexia-frontend-service
+  namespace: nextstep
+spec:
+  selector:
+    app: nexia-frontend
+  ports:
+  - port: 6003
+    targetPort: 6003
+  type: ClusterIP

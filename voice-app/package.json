@@ -1,0 +1,37 @@
+{
+  "name": "nexia-voice",
+  "version": "1.0.0",
+  "description": "NEXIA Voice Assistant - TDAH-optimized voice interface for BlueOcean ecosystem",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "vite dev --host 0.0.0.0 --port 6003",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "voice:setup": "python scripts/setup-voice-models.py",
+    "k8s:deploy": "kubectl apply -f k8s/",
+    "cluster:deploy": "./scripts/deploy-voice-services.sh"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@tauri-apps/api": "^1.5.0",
+    "@tauri-apps/plugin-microphone": "^1.0.0",
+    "socket.io-client": "^4.7.2",
+    "wavesurfer.js": "^7.5.0",
+    "zustand": "^4.4.7",
+    "lucide-react": "^0.292.0",
+    "framer-motion": "^10.16.16"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@tauri-apps/cli": "^1.5.0",
+    "@vitejs/plugin-react": "^4.0.3",
+    "typescript": "^5.0.2",
+    "vite": "^4.4.5",
+    "tailwindcss": "^3.3.3"
+  }
+}

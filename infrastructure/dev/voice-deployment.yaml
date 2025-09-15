@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexia-voice-dev
+  namespace: nexia-voice-dev
+  labels:
+    app: nexia-voice
+    env: development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nexia-voice
+      env: development
+  template:
+    metadata:
+      labels:
+        app: nexia-voice
+        env: development
+    spec:
+      containers:
+      - name: nexia-voice
+        image: registry.digitalocean.com/nexia/nexia-voice:dev
+        ports:
+        - containerPort: 7011
+        env:
+        - name: NODE_ENV
+          value: "development"
+        - name: PORT
+          value: "7011"
+        - name: ONLYONEAPI_BASE_URL
+          value: "https://api.onlyoneapi.com"
+        - name: NEXIA_SUPERVISOR_URL
+          value: "http://nexia-supervisor-dev.nexia-supervisor-dev.svc.cluster.local:7014"
+        # SECURE: API Key from Kubernetes secret
+        - name: ONLYONEAPI_KEY
+          valueFrom:
+            secretKeyRef:
+              name: onlyoneapi-credentials
+              key: api-key
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi" 
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 7011
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 7011
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexia-voice-dev
+  namespace: nexia-voice-dev
+spec:
+  selector:
+    app: nexia-voice
+    env: development
+  ports:
+  - protocol: TCP
+    port: 7011
+    targetPort: 7011
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nexia-voice-dev
+  namespace: nexia-voice-dev
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+  - hosts:
+    - voice-dev.nexia.onlyoneapi.com
+    secretName: nexia-voice-dev-tls
+  rules:
+  - host: voice-dev.nexia.onlyoneapi.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nexia-voice-dev
+            port:
+              number: 7011

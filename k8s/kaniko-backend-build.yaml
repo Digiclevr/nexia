@@ -1,0 +1,67 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nexia-backend-build
+  namespace: nexia
+  labels:
+    app: nexia-backend
+    component: build
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:latest
+        args:
+        - "--dockerfile=/workspace/services/ai-core/Dockerfile"
+        - "--context=git://github.com/ludovicpilet/NEXIA.git"
+        - "--destination=registry.digitalocean.com/onlyoneapi/nexia-backend:latest"
+        - "--destination=registry.digitalocean.com/onlyoneapi/nexia-backend:$(BUILD_ID)"
+        - "--cache=true"
+        - "--cache-ttl=24h"
+        env:
+        - name: BUILD_ID
+          value: "manual"
+        volumeMounts:
+        - name: docker-config
+          mountPath: /kaniko/.docker
+          readOnly: true
+      volumes:
+      - name: docker-config
+        secret:
+          secretName: regcred
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nexia-frontend-build
+  namespace: nexia
+  labels:
+    app: nexia-frontend
+    component: build
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:latest
+        args:
+        - "--dockerfile=/workspace/apps/web/Dockerfile"
+        - "--context=git://github.com/ludovicpilet/NEXIA.git"
+        - "--destination=registry.digitalocean.com/onlyoneapi/nexia-frontend:latest"
+        - "--destination=registry.digitalocean.com/onlyoneapi/nexia-frontend:$(BUILD_ID)"
+        - "--cache=true"
+        - "--cache-ttl=24h"
+        env:
+        - name: BUILD_ID
+          value: "manual"
+        volumeMounts:
+        - name: docker-config
+          mountPath: /kaniko/.docker
+          readOnly: true
+      volumes:
+      - name: docker-config
+        secret:
+          secretName: regcred

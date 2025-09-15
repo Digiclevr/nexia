@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexia-postgres
+  namespace: nexia
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nexia-postgres
+  template:
+    metadata:
+      labels:
+        app: nexia-postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        env:
+        - name: POSTGRES_DB
+          value: "nexia_monitoring"
+        - name: POSTGRES_USER
+          value: "nexia_user"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nexia-secrets
+              key: postgres-password
+        - name: PGDATA
+          value: "/var/lib/postgresql/data/pgdata"
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        - name: init-schema
+          mountPath: /docker-entrypoint-initdb.d
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - nexia_user
+            - -d
+            - nexia_monitoring
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - nexia_user
+            - -d
+            - nexia_monitoring
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: nexia-postgres-pvc
+      - name: init-schema
+        configMap:
+          name: nexia-db-schema
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexia-postgres-service
+  namespace: nexia
+spec:
+  selector:
+    app: nexia-postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nexia-postgres-pvc
+  namespace: nexia
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

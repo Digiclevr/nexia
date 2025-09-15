@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexia-voice-tts
+  namespace: nexia-voice
+  labels:
+    app: nexia-voice-tts
+    component: text-to-speech
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nexia-voice-tts
+  template:
+    metadata:
+      labels:
+        app: nexia-voice-tts
+    spec:
+      containers:
+      - name: tts-service
+        image: registry.digitalocean.com/blueocean/nexia-tts:latest
+        ports:
+        - containerPort: 8081
+        env:
+        - name: PRIMARY_MODEL
+          value: "microsoft/speecht5_tts"
+        - name: PREMIUM_MODEL
+          value: "suno/bark"
+        - name: DEVICE
+          value: "cuda"
+        - name: VOICE_QUALITY
+          value: "24000"
+        resources:
+          requests:
+            memory: "3Gi"
+            cpu: "500m"
+            nvidia.com/gpu: 1
+          limits:
+            memory: "6Gi"
+            cpu: "1500m"
+            nvidia.com/gpu: 1
+        volumeMounts:
+        - name: model-cache
+          mountPath: /app/models
+        - name: voice-cache
+          mountPath: /app/voice_cache
+        - name: audio-output
+          mountPath: /tmp/audio_out
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 45
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 90
+          periodSeconds: 30
+      volumes:
+      - name: model-cache
+        persistentVolumeClaim:
+          claimName: nexia-models-pvc
+      - name: voice-cache
+        persistentVolumeClaim:
+          claimName: nexia-voice-cache-pvc
+      - name: audio-output
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexia-voice-tts-service
+  namespace: nexia-voice
+spec:
+  selector:
+    app: nexia-voice-tts
+  ports:
+  - port: 80
+    targetPort: 8081
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nexia-voice-tts-hpa
+  namespace: nexia-voice
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nexia-voice-tts
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 75
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 85

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexia
+  labels:
+    app: nexia
+    version: "1.0.0"

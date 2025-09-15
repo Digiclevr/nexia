@@ -1,0 +1,30 @@
+{
+  "name": "NEXIA Health Check",
+  "description": "Vérifie la santé du supervisor NEXIA",
+  "icon": "🏥",
+  "phrase": "Nexia health check",
+  "actions": [
+    {
+      "type": "getURL",
+      "url": "http://localhost:7014/api/health",
+      "method": "GET",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    },
+    {
+      "type": "getDictionary",
+      "keys": ["status", "uptime", "environment"]
+    },
+    {
+      "type": "speakText",
+      "text": "NEXIA Supervisor est {status}. Uptime {uptime} secondes en environnement {environment}."
+    }
+  ],
+  "configuration": {
+    "allowedOnLockScreen": true,
+    "confirmBeforeRun": false,
+    "showInShareSheet": false,
+    "showInWidget": true
+  }
+}

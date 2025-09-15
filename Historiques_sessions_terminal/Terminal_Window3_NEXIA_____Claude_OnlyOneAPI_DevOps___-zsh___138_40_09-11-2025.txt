@@ -1,0 +1,112 @@
+=== SAUVEGARDE FENÊTRE TERMINAL 3 ===
+Date: Jeu 11 sep 2025 10:31:29 CEST
+Application: Terminal.app
+Fenêtre: 3/36
+Nom de fenêtre: NEXIA — 🤖 Claude OnlyOneAPI DevOps — -zsh — 138×40
+Nombre d'onglets: 1
+======================================
+
+=== INFORMATIONS ONGLETS ===
+
+  Tab 1: Tab_1
+
+=== HISTORIQUE SHELL GLOBAL (50 dernières commandes) ===
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && git clone https://github.com/open-webui/open-webui app
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && git clone https://github.com/open-webui/open-webui app
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda create -y -p /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env python=3.11  && conda deactivate && conda deactivate && conda deactivate && conda activate /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env && conda install -y -c conda-forge nodejs=20.12.2
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env/bin/python --version && /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env/bin/python -m venv env
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env && /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env/bin/node --version && /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env/bin/npm i && /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env/bin/npm run build
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env && source /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/env/bin/activate /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/env && pip install -r requirements.txt
+echo pinokio
+echo pinokio
+echo pinokio
+echo pinokio
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && env
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && conda list
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && pip list
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && brew list -1
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && xcode-select -p
+echo pinokio
+echo pinokio
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && source /Users/ludovicpilet/pinokio/api/storydiffusion-comics.git/app/env/bin/activate /Users/ludovicpilet/pinokio/api/storydiffusion-comics.git/app/env && python app.py
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env && source /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/env/bin/activate /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/env && bash start.sh
+python3 -c "print('✅ Hello depuis Bash')"
+python3 -u -c "print('✅ Hello avec -u')"
+echo 'print("✅ Python marche enfin")' > testprint.py
+python3 -u testprint.py
+exit
+ls
+exit
+exit
+quit
+exit
+
+=== PROCESSUS TERMINAL ACTIFS ===
+ludovicpilet      2859   4,1  0,8 413307744 193120   ??  S     9:03     3:46.76 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
+
+=== VARIABLES D'ENVIRONNEMENT COURANTES ===
+USER: ludovicpilet
+HOME: /Users/ludovicpilet
+SHELL: /bin/zsh
+PWD: /home
+PATH: /Users/ludovicpilet/.nvm/versions/node/v20.19.4/bin:/Users/ludovicpilet/.local/bin:/opt/homebrew/opt/python@3.11/libexec/bin:/Applications/Terraform:/opt/homebrew/opt/terraform/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.12/bin:/Library/Frameworks/Python.framework/Versions/3.11/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/usr/local/share/dotnet:/Users/ludovicpilet/.dotnet/tools:/Users/ludovicpilet/.cargo/bin
+
+=== SESSIONS TTY ACTIVES ===
+ludovicpilet     console       3 sep 09:03 
+ludovicpilet     ttys000      11 sep 09:03 
+ludovicpilet     ttys001      11 sep 09:03 
+ludovicpilet     ttys002      11 sep 09:03 
+ludovicpilet     ttys003      11 sep 09:03 
+ludovicpilet     ttys004      11 sep 09:03 
+ludovicpilet     ttys005      11 sep 09:03 
+ludovicpilet     ttys006      11 sep 09:03 
+ludovicpilet     ttys007      11 sep 09:03 
+ludovicpilet     ttys008      11 sep 09:03 
+ludovicpilet     ttys009      11 sep 09:03 
+ludovicpilet     ttys010      11 sep 09:03 
+ludovicpilet     ttys011      11 sep 09:03 
+ludovicpilet     ttys012      11 sep 09:03 
+ludovicpilet     ttys013      11 sep 09:03 
+ludovicpilet     ttys014      11 sep 09:03 
+ludovicpilet     ttys015      11 sep 09:03 
+ludovicpilet     ttys016      11 sep 09:03 
+ludovicpilet     ttys017      11 sep 09:03 
+ludovicpilet     ttys018      11 sep 09:03 
+ludovicpilet     ttys019      11 sep 09:03 
+ludovicpilet     ttys020      11 sep 09:03 
+ludovicpilet     ttys021      11 sep 09:03 
+ludovicpilet     ttys022      11 sep 09:03 
+ludovicpilet     ttys023      11 sep 09:03 
+ludovicpilet     ttys024      11 sep 09:03 
+ludovicpilet     ttys025      11 sep 09:03 
+ludovicpilet     ttys026      11 sep 09:03 
+ludovicpilet     ttys027      11 sep 09:03 
+ludovicpilet     ttys028      11 sep 09:03 
+ludovicpilet     ttys029      11 sep 09:03 
+ludovicpilet     ttys030      11 sep 09:03 
+ludovicpilet     ttys031      11 sep 09:03 
+ludovicpilet     ttys032      11 sep 09:03 
+ludovicpilet     ttys033      11 sep 09:03 
+ludovicpilet     ttys034      11 sep 09:03 
+ludovicpilet     ttys035      11 sep 09:03 

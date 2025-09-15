@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test NEXIA</title>
+    <style>
+        body {
+            background: #111827;
+            color: white;
+            font-family: Arial;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🤖 NEXIA Test</h1>
+    <p>Si tu vois cette page, le serveur fonctionne.</p>
+    <p>Problème = frontend React/Tailwind</p>
+    
+    <script>
+        console.log('✅ Test page loaded');
+        fetch('http://localhost:8000/api/v1/health')
+            .then(r => r.json())
+            .then(d => console.log('✅ Backend:', d))
+            .catch(e => console.log('❌ Backend:', e));
+    </script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mautic-postgres-init
+  namespace: unified-tools
+data:
+  init-postgres.sh: |
+    #!/bin/bash
+    set -e
+    
+    echo "=== Mautic PostgreSQL Init Script ==="
+    
+    # Install PostgreSQL client and PHP PostgreSQL extension
+    apt-get update
+    apt-get install -y postgresql-client libpq-dev
+    docker-php-ext-install pdo_pgsql
+    
+    # Wait for PostgreSQL to be ready
+    echo "Waiting for PostgreSQL..."
+    until pg_isready -h postgres-central.platform.svc.cluster.local -p 5432 -U mautic_unified; do
+      echo "PostgreSQL is unavailable - sleeping"
+      sleep 2
+    done
+    echo "PostgreSQL is ready!"
+    
+    # Initialize Mautic database schema
+    cd /var/www/html/docroot
+    
+    # Create local.php config file
+    cat > app/config/local.php << 'CONFIG'
+    <?php
+    $parameters = array(
+        'db_driver' => 'pdo_pgsql',
+        'db_host' => 'postgres-central.platform.svc.cluster.local',
+        'db_port' => 5432,
+        'db_name' => 'fastcash_mautic',
+        'db_user' => 'mautic_unified',
+        'db_password' => 'mautic-postgres-2025',
+        'db_server_version' => '14.18',
+        'db_charset' => 'utf8',
+        'site_url' => 'http://localhost:3103',
+        'secret_key' => 'fastcash_secret_postgresql_2025',
+        'install_complete' => true,
+        'api_enabled' => 1,
+        'api_enable_basic_auth' => 1,
+        'api_oauth2_access_token_lifetime' => 3600,
+        'api_oauth2_refresh_token_lifetime' => 1209600,
+    );
+    CONFIG
+    
+    # Run Mautic installation
+    echo "Installing Mautic schema..."
+    php bin/console mautic:install:data --force || true
+    
+    echo "=== Mautic PostgreSQL Init Complete ==="
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mautic-fastcash
+  namespace: unified-tools
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mautic-fastcash
+  template:
+    metadata:
+      labels:
+        app: mautic-fastcash
+    spec:
+      initContainers:
+      - name: postgres-init
+        image: mautic/mautic:5.2.3-apache
+        command: ["/bin/bash", "/init-postgres.sh"]
+        volumeMounts:
+        - name: postgres-init
+          mountPath: /init-postgres.sh
+          subPath: init-postgres.sh
+        env:
+        - name: MAUTIC_DB_HOST
+          value: "postgres-central.platform.svc.cluster.local"
+        - name: MAUTIC_DB_NAME
+          value: "fastcash_mautic"
+        - name: MAUTIC_DB_USER
+          value: "mautic_unified"
+        - name: MAUTIC_DB_PASSWORD
+          value: "mautic-postgres-2025"
+      containers:
+      - name: mautic
+        image: mautic/mautic:5.2.3-apache
+        ports:
+        - containerPort: 80
+        env:
+        - name: MAUTIC_DB_HOST
+          value: "postgres-central.platform.svc.cluster.local"
+        - name: MAUTIC_DB_PORT
+          value: "5432"
+        - name: MAUTIC_DB_NAME
+          value: "fastcash_mautic"
+        - name: MAUTIC_DB_USER
+          value: "mautic_unified"
+        - name: MAUTIC_DB_PASSWORD
+          value: "mautic-postgres-2025"
+        - name: MAUTIC_DB_DRIVER
+          value: "pdo_pgsql"
+        - name: MAUTIC_DB_SERVER_VERSION
+          value: "14.18"
+        - name: MAUTIC_SECRET_KEY
+          value: "fastcash_secret_postgresql_2025"
+        - name: MAUTIC_SITE_URL
+          value: "http://localhost:3103"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        volumeMounts:
+        - name: mautic-data
+          mountPath: /var/www/html/docroot/var
+      volumes:
+      - name: postgres-init
+        configMap:
+          name: mautic-postgres-init
+          defaultMode: 0755
+      - name: mautic-data
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mautic-fastcash
+  namespace: unified-tools
+spec:
+  selector:
+    app: mautic-fastcash
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP

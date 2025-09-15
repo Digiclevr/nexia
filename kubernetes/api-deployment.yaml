@@ -1,0 +1,184 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexia-api
+  namespace: nexia
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nexia-api
+  template:
+    metadata:
+      labels:
+        app: nexia-api
+    spec:
+      containers:
+      - name: api
+        image: node:18-alpine
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/sh
+        - -c
+        - |
+          apk add --no-cache git
+          git clone https://github.com/ludovicpilet/kreach.git /tmp/repo
+          if [ -d "/tmp/repo/nexia/api" ]; then
+            cp -r /tmp/repo/nexia/api/* /app/
+          else
+            echo "Repo structure not found, creating minimal API"
+            mkdir -p /app/src
+            cat > /app/package.json << 'EOF'
+          {
+            "name": "nexia-api",
+            "version": "1.0.0",
+            "main": "src/server.js",
+            "scripts": {
+              "start": "node src/server.js"
+            },
+            "dependencies": {
+              "express": "^4.18.2",
+              "cors": "^2.8.5"
+            }
+          }
+          EOF
+            cat > /app/src/server.js << 'EOF'
+          const http = require('http');
+          const url = require('url');
+          const PORT = process.env.PORT || 3001;
+          
+          const server = http.createServer((req, res) => {
+            const parsedUrl = url.parse(req.url, true);
+            const path = parsedUrl.pathname;
+            const method = req.method;
+            
+            // CORS headers
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+            res.setHeader('Content-Type', 'application/json');
+            
+            if (method === 'OPTIONS') {
+              res.writeHead(200);
+              res.end();
+              return;
+            }
+            
+            if (path === '/health') {
+              res.writeHead(200);
+              res.end(JSON.stringify({ 
+                status: 'ok', 
+                timestamp: new Date().toISOString(),
+                service: 'nexia-api'
+              }));
+              return;
+            }
+            
+            if (path === '/api/v1/reports' && method === 'GET') {
+              res.writeHead(200);
+              res.end(JSON.stringify({ 
+                message: 'NEXIA API Ready', 
+                reports: [],
+                cluster: 'kubernetes'
+              }));
+              return;
+            }
+            
+            if (path === '/api/v1/reports' && method === 'POST') {
+              let body = '';
+              req.on('data', chunk => {
+                body += chunk.toString();
+              });
+              req.on('end', () => {
+                try {
+                  const data = JSON.parse(body);
+                  console.log('Received report:', data);
+                  res.writeHead(200);
+                  res.end(JSON.stringify({ 
+                    success: true, 
+                    id: Date.now(),
+                    message: 'Report received'
+                  }));
+                } catch (error) {
+                  res.writeHead(400);
+                  res.end(JSON.stringify({ error: 'Invalid JSON' }));
+                }
+              });
+              return;
+            }
+            
+            // 404 for other paths
+            res.writeHead(404);
+            res.end(JSON.stringify({ error: 'Not found' }));
+          });
+          
+          server.listen(PORT, '0.0.0.0', () => {
+            console.log(`🚀 NEXIA API running on port ${PORT}`);
+          });
+          EOF
+          fi
+          cd /app
+          node src/server.js
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3001"
+        - name: DB_HOST
+          value: "nexia-postgres-service"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: "nexia_monitoring"
+        - name: DB_USER
+          value: "nexia_user"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nexia-secrets
+              key: postgres-password
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: nexia-secrets
+              key: jwt-secret
+        - name: API_RATE_LIMIT_WINDOW_MS
+          value: "900000"
+        - name: API_RATE_LIMIT_MAX_REQUESTS
+          value: "1000"
+        - name: LOG_LEVEL
+          value: "info"
+        ports:
+        - containerPort: 3001
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 40
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexia-api-service
+  namespace: nexia
+spec:
+  selector:
+    app: nexia-api
+  ports:
+  - port: 3001
+    targetPort: 3001
+  type: ClusterIP

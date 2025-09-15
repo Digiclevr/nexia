@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mautic-fastcash
+  namespace: unified-tools
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mautic-fastcash
+  template:
+    metadata:
+      labels:
+        app: mautic-fastcash
+    spec:
+      containers:
+      - name: mautic
+        image: mautic/mautic:5-apache
+        ports:
+        - containerPort: 80
+        env:
+        # MySQL Database Configuration (using stable mysql-mautic)
+        - name: MAUTIC_DB_DRIVER
+          value: "pdo_mysql"
+        - name: MAUTIC_DB_HOST
+          value: "10.245.184.106"
+        - name: MAUTIC_DB_PORT
+          value: "3306"
+        - name: MAUTIC_DB_NAME
+          value: "mautic_db"
+        - name: MAUTIC_DB_USER
+          value: "mautic"
+        - name: MAUTIC_DB_PASSWORD
+          value: "mautic-mysql-2025"
+        # FASTCASH Configuration
+        - name: MAUTIC_SITE_URL
+          value: "http://localhost:8085"
+        - name: MAUTIC_SECRET_KEY
+          value: "fastcash_secret_key_2025_mysql"
+        # Increased resources for performance
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+      nodeSelector:
+        doks.digitalocean.com/node-pool: applications-pool
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mautic-fastcash-service
+  namespace: unified-tools
+spec:
+  selector:
+    app: mautic-fastcash
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP

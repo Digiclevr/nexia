@@ -1,0 +1,306 @@
+/* OnlyOneAPI360 Dashboard Iframe Integration */
+.onlyoneapi360-container {
+  padding: 1rem;
+  background: var(--background);
+  min-height: 100vh;
+}
+
+.iframe-header {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.iframe-header h1 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.iframe-header p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.iframe-wrapper {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.onlyoneapi360-iframe {
+  display: block;
+  background: white;
+}
+
+.iframe-fallback {
+  padding: 2rem;
+  text-align: center;
+  background: var(--error-bg, #fee);
+  border: 1px solid var(--error);
+  border-radius: 0.5rem;
+  color: var(--error);
+}
+
+/* Health Indicators Styles */
+.health-indicators {
+  margin-bottom: 1.5rem;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.metric-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.metric-value {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.metric-status {
+  font-size: 0.625rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.metric-status.active {
+  background: var(--success);
+  color: white;
+}
+
+.metric-status.error {
+  background: var(--error);
+  color: white;
+}
+
+.status-loaded {
+  color: var(--success);
+}
+
+.status-loading {
+  color: var(--warning, #f59e0b);
+}
+
+.status-iframe-error,
+.status-connection-error,
+.status-api-error {
+  color: var(--error);
+}
+
+.error-banner {
+  background: var(--error-bg, #fee);
+  border: 1px solid var(--error);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  color: var(--error);
+  text-align: center;
+  font-weight: 500;
+}
+
+.system-health {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-around;
+  gap: 1rem;
+}
+
+.health-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.client-item {
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.client-item:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.client-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.client-name {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 1.125rem;
+}
+
+.client-tier {
+  background: var(--primary);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.client-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-label {
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.detail-value {
+  color: var(--text-muted);
+}
+
+.revenue-item {
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.revenue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.revenue-month {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 1.125rem;
+}
+
+.revenue-amount {
+  font-weight: 700;
+  color: var(--success);
+  font-size: 1.25rem;
+}
+
+.revenue-growth {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.growth-positive {
+  color: var(--success);
+}
+
+.growth-negative {
+  color: var(--error);
+}
+
+.system-status {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.status-item {
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.status-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.status-uptime {
+  color: var(--success);
+}
+
+.status-response {
+  color: var(--primary);
+}
+
+.status-requests {
+  color: var(--secondary);
+}
+
+.status-label {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.client-item.error {
+  background: var(--error-bg, #fee);
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.health-item.error {
+  background: var(--error-bg, #fee);
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.highlight.error {
+  color: var(--error);
+}

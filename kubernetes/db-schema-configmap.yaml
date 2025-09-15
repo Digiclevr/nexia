@@ -1,0 +1,150 @@
+apiVersion: v1
+data:
+  database-schema.sql: "-- =====================================================\n--
+    NEXIA KUBERNETES HEALTH MONITORING DATABASE SCHEMA\n-- =====================================================\n--
+    Description: PostgreSQL schema for storing health metrics and trends\n-- Author:
+    NEXIA Monitoring System\n-- Version: 1.0\n-- =====================================================\n\n--
+    Create database (run separately as superuser)\n-- CREATE DATABASE nexia_monitoring;\n--
+    \\c nexia_monitoring;\n\n-- Enable UUID extension\nCREATE EXTENSION IF NOT EXISTS
+    \"uuid-ossp\";\n\n-- =====================================================\n--
+    CLUSTERS TABLE\n-- =====================================================\nCREATE
+    TABLE clusters (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    name
+    VARCHAR(255) NOT NULL UNIQUE,\n    description TEXT,\n    endpoint VARCHAR(500),\n
+    \   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),\n    updated_at TIMESTAMP
+    WITH TIME ZONE DEFAULT NOW(),\n    is_active BOOLEAN DEFAULT true\n);\n\n-- =====================================================\n--
+    HEALTH CATEGORIES TABLE\n-- =====================================================\nCREATE
+    TABLE health_categories (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n
+    \   name VARCHAR(100) NOT NULL UNIQUE,\n    description TEXT,\n    weight DECIMAL(3,2)
+    DEFAULT 1.0, -- For weighted scoring\n    created_at TIMESTAMP WITH TIME ZONE
+    DEFAULT NOW()\n);\n\n-- Insert default categories\nINSERT INTO health_categories
+    (name, description, weight) VALUES\n    ('infrastructure', 'Node health, CPU,
+    memory, storage capacity', 1.0),\n    ('applications', 'Pod status, deployments,
+    services health', 1.2),\n    ('storage', 'Persistent volumes, storage performance',
+    1.0),\n    ('network', 'LoadBalancers, ingress, connectivity', 1.0),\n    ('security',
+    'RBAC, secrets, security contexts', 1.1),\n    ('monitoring', 'Observability stack,
+    alerts, metrics', 0.9);\n\n-- =====================================================\n--
+    HEALTH REPORTS TABLE\n-- =====================================================\nCREATE
+    TABLE health_reports (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n
+    \   cluster_id UUID NOT NULL REFERENCES clusters(id) ON DELETE CASCADE,\n    timestamp
+    TIMESTAMP WITH TIME ZONE NOT NULL,\n    overall_score INTEGER NOT NULL CHECK (overall_score
+    >= 0 AND overall_score <= 100),\n    overall_status VARCHAR(50) NOT NULL,\n    report_data
+    JSONB, -- Full JSON report for detailed analysis\n    execution_time_seconds DECIMAL(10,3),\n
+    \   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),\n    \n    CONSTRAINT unique_cluster_timestamp
+    UNIQUE (cluster_id, timestamp)\n);\n\n-- =====================================================\n--
+    CATEGORY SCORES TABLE\n-- =====================================================\nCREATE
+    TABLE category_scores (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n
+    \   report_id UUID NOT NULL REFERENCES health_reports(id) ON DELETE CASCADE,\n
+    \   category_id UUID NOT NULL REFERENCES health_categories(id) ON DELETE CASCADE,\n
+    \   score INTEGER NOT NULL CHECK (score >= 0 AND score <= 100),\n    status VARCHAR(50)
+    NOT NULL,\n    issues JSONB, -- Array of issues detected\n    metrics JSONB, --
+    Additional metrics (CPU%, memory%, etc.)\n    created_at TIMESTAMP WITH TIME ZONE
+    DEFAULT NOW(),\n    \n    CONSTRAINT unique_report_category UNIQUE (report_id,
+    category_id)\n);\n\n-- =====================================================\n--
+    HEALTH ISSUES TABLE\n-- =====================================================\nCREATE
+    TABLE health_issues (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    report_id
+    UUID NOT NULL REFERENCES health_reports(id) ON DELETE CASCADE,\n    category_id
+    UUID NOT NULL REFERENCES health_categories(id) ON DELETE CASCADE,\n    severity
+    VARCHAR(20) NOT NULL CHECK (severity IN ('critical', 'warning', 'info')),\n    title
+    VARCHAR(500) NOT NULL,\n    description TEXT,\n    resource_type VARCHAR(100),
+    -- pod, node, pv, etc.\n    resource_name VARCHAR(255),\n    namespace VARCHAR(255),\n
+    \   recommendation TEXT,\n    is_resolved BOOLEAN DEFAULT false,\n    resolved_at
+    TIMESTAMP WITH TIME ZONE,\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()\n);\n\n--
+    =====================================================\n-- ACTIONS TABLE\n-- =====================================================\nCREATE
+    TABLE recommended_actions (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n
+    \   report_id UUID NOT NULL REFERENCES health_reports(id) ON DELETE CASCADE,\n
+    \   priority VARCHAR(20) NOT NULL CHECK (priority IN ('urgent', 'medium', 'low',
+    'maintenance')),\n    title VARCHAR(500) NOT NULL,\n    description TEXT,\n    command
+    TEXT, -- kubectl command or action to take\n    estimated_time_minutes INTEGER,\n
+    \   is_completed BOOLEAN DEFAULT false,\n    completed_at TIMESTAMP WITH TIME
+    ZONE,\n    completed_by VARCHAR(255),\n    created_at TIMESTAMP WITH TIME ZONE
+    DEFAULT NOW()\n);\n\n-- =====================================================\n--
+    METRICS HISTORY TABLE\n-- =====================================================\nCREATE
+    TABLE metrics_history (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n
+    \   cluster_id UUID NOT NULL REFERENCES clusters(id) ON DELETE CASCADE,\n    metric_name
+    VARCHAR(100) NOT NULL,\n    metric_value DECIMAL(15,4),\n    metric_unit VARCHAR(50),\n
+    \   labels JSONB, -- Additional labels/tags\n    timestamp TIMESTAMP WITH TIME
+    ZONE NOT NULL,\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()\n);\n\n--
+    =====================================================\n-- ALERTS TABLE\n-- =====================================================\nCREATE
+    TABLE alerts (\n    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    cluster_id
+    UUID NOT NULL REFERENCES clusters(id) ON DELETE CASCADE,\n    alert_type VARCHAR(100)
+    NOT NULL,\n    severity VARCHAR(20) NOT NULL CHECK (severity IN ('critical', 'warning',
+    'info')),\n    title VARCHAR(500) NOT NULL,\n    description TEXT,\n    triggered_at
+    TIMESTAMP WITH TIME ZONE NOT NULL,\n    resolved_at TIMESTAMP WITH TIME ZONE,\n
+    \   is_resolved BOOLEAN DEFAULT false,\n    metadata JSONB,\n    created_at TIMESTAMP
+    WITH TIME ZONE DEFAULT NOW()\n);\n\n-- =====================================================\n--
+    INDEXES FOR PERFORMANCE\n-- =====================================================\n\n--
+    Health Reports indexes\nCREATE INDEX idx_health_reports_cluster_timestamp ON health_reports(cluster_id,
+    timestamp DESC);\nCREATE INDEX idx_health_reports_overall_score ON health_reports(overall_score);\nCREATE
+    INDEX idx_health_reports_created_at ON health_reports(created_at DESC);\n\n--
+    Category Scores indexes\nCREATE INDEX idx_category_scores_report_id ON category_scores(report_id);\nCREATE
+    INDEX idx_category_scores_category_id ON category_scores(category_id);\nCREATE
+    INDEX idx_category_scores_score ON category_scores(score);\n\n-- Health Issues
+    indexes\nCREATE INDEX idx_health_issues_report_id ON health_issues(report_id);\nCREATE
+    INDEX idx_health_issues_severity ON health_issues(severity);\nCREATE INDEX idx_health_issues_resolved
+    ON health_issues(is_resolved);\nCREATE INDEX idx_health_issues_resource ON health_issues(resource_type,
+    resource_name);\n\n-- Actions indexes\nCREATE INDEX idx_recommended_actions_report_id
+    ON recommended_actions(report_id);\nCREATE INDEX idx_recommended_actions_priority
+    ON recommended_actions(priority);\nCREATE INDEX idx_recommended_actions_completed
+    ON recommended_actions(is_completed);\n\n-- Metrics History indexes\nCREATE INDEX
+    idx_metrics_history_cluster_metric_timestamp ON metrics_history(cluster_id, metric_name,
+    timestamp DESC);\nCREATE INDEX idx_metrics_history_timestamp ON metrics_history(timestamp
+    DESC);\n\n-- Alerts indexes\nCREATE INDEX idx_alerts_cluster_id ON alerts(cluster_id);\nCREATE
+    INDEX idx_alerts_triggered_at ON alerts(triggered_at DESC);\nCREATE INDEX idx_alerts_severity
+    ON alerts(severity);\nCREATE INDEX idx_alerts_resolved ON alerts(is_resolved);\n\n--
+    =====================================================\n-- USEFUL VIEWS\n-- =====================================================\n\n--
+    Latest reports per cluster\nCREATE VIEW latest_reports AS\nSELECT DISTINCT ON
+    (cluster_id) \n    hr.*,\n    c.name as cluster_name\nFROM health_reports hr\nJOIN
+    clusters c ON c.id = hr.cluster_id\nWHERE c.is_active = true\nORDER BY cluster_id,
+    timestamp DESC;\n\n-- Score trends (last 24 hours)\nCREATE VIEW score_trends_24h
+    AS\nSELECT \n    hr.cluster_id,\n    c.name as cluster_name,\n    hc.name as category_name,\n
+    \   cs.score,\n    cs.status,\n    hr.timestamp,\n    LAG(cs.score, 1) OVER (\n
+    \       PARTITION BY hr.cluster_id, cs.category_id \n        ORDER BY hr.timestamp\n
+    \   ) as previous_score\nFROM health_reports hr\nJOIN clusters c ON c.id = hr.cluster_id\nJOIN
+    category_scores cs ON cs.report_id = hr.id\nJOIN health_categories hc ON hc.id
+    = cs.category_id\nWHERE hr.timestamp >= NOW() - INTERVAL '24 hours'\n    AND c.is_active
+    = true\nORDER BY hr.cluster_id, hc.name, hr.timestamp DESC;\n\n-- Critical issues
+    summary\nCREATE VIEW critical_issues_summary AS\nSELECT \n    c.name as cluster_name,\n
+    \   hc.name as category_name,\n    COUNT(*) as issue_count,\n    MAX(hr.timestamp)
+    as latest_report\nFROM health_issues hi\nJOIN health_reports hr ON hr.id = hi.report_id\nJOIN
+    clusters c ON c.id = hr.cluster_id\nJOIN health_categories hc ON hc.id = hi.category_id\nWHERE
+    hi.severity = 'critical' \n    AND hi.is_resolved = false\n    AND c.is_active
+    = true\nGROUP BY c.name, hc.name\nORDER BY issue_count DESC;\n\n-- =====================================================\n--
+    FUNCTIONS\n-- =====================================================\n\n-- Function
+    to calculate weighted overall score\nCREATE OR REPLACE FUNCTION calculate_weighted_score(report_uuid
+    UUID)\nRETURNS INTEGER AS $$\nDECLARE\n    weighted_sum DECIMAL;\n    total_weight
+    DECIMAL;\nBEGIN\n    SELECT \n        SUM(cs.score * hc.weight),\n        SUM(hc.weight)\n
+    \   INTO weighted_sum, total_weight\n    FROM category_scores cs\n    JOIN health_categories
+    hc ON hc.id = cs.category_id\n    WHERE cs.report_id = report_uuid;\n    \n    IF
+    total_weight > 0 THEN\n        RETURN ROUND(weighted_sum / total_weight);\n    ELSE\n
+    \       RETURN 0;\n    END IF;\nEND;\n$$ LANGUAGE plpgsql;\n\n-- Function to get
+    cluster health trend\nCREATE OR REPLACE FUNCTION get_health_trend(\n    cluster_uuid
+    UUID, \n    hours_back INTEGER DEFAULT 24\n)\nRETURNS TABLE (\n    timestamp TIMESTAMP
+    WITH TIME ZONE,\n    overall_score INTEGER,\n    infrastructure_score INTEGER,\n
+    \   applications_score INTEGER,\n    storage_score INTEGER,\n    network_score
+    INTEGER,\n    security_score INTEGER,\n    monitoring_score INTEGER\n) AS $$\nBEGIN\n
+    \   RETURN QUERY\n    SELECT \n        hr.timestamp,\n        hr.overall_score,\n
+    \       MAX(CASE WHEN hc.name = 'infrastructure' THEN cs.score END) as infrastructure_score,\n
+    \       MAX(CASE WHEN hc.name = 'applications' THEN cs.score END) as applications_score,\n
+    \       MAX(CASE WHEN hc.name = 'storage' THEN cs.score END) as storage_score,\n
+    \       MAX(CASE WHEN hc.name = 'network' THEN cs.score END) as network_score,\n
+    \       MAX(CASE WHEN hc.name = 'security' THEN cs.score END) as security_score,\n
+    \       MAX(CASE WHEN hc.name = 'monitoring' THEN cs.score END) as monitoring_score\n
+    \   FROM health_reports hr\n    JOIN category_scores cs ON cs.report_id = hr.id\n
+    \   JOIN health_categories hc ON hc.id = cs.category_id\n    WHERE hr.cluster_id
+    = cluster_uuid\n        AND hr.timestamp >= NOW() - INTERVAL '%s hours'\n    GROUP
+    BY hr.timestamp, hr.overall_score\n    ORDER BY hr.timestamp DESC;\nEND;\n$$ LANGUAGE
+    plpgsql;\n\n-- =====================================================\n-- SAMPLE
+    DATA INSERT\n-- =====================================================\n\n-- Insert
+    default cluster\nINSERT INTO clusters (name, description, endpoint) \nVALUES ('default-cluster',
+    'Main Kubernetes cluster', 'https://kubernetes.default.svc');\n\n-- =====================================================\n--
+    PERMISSIONS (adjust as needed)\n-- =====================================================\n\n--
+    Create application user\n-- CREATE USER nexia_app WITH PASSWORD 'secure_password_here';\n--
+    GRANT CONNECT ON DATABASE nexia_monitoring TO nexia_app;\n-- GRANT USAGE ON SCHEMA
+    public TO nexia_app;\n-- GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN
+    SCHEMA public TO nexia_app;\n-- GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA
+    public TO nexia_app;"
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: nexia-db-schema
+  namespace: nexia

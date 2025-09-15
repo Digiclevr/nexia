@@ -1,0 +1,30 @@
+{
+  "name": "NEXIA Status Global",
+  "description": "Obtient le status de tous les écosystèmes supervisés par NEXIA",
+  "icon": "📊",
+  "phrase": "Nexia status global",
+  "actions": [
+    {
+      "type": "getURL",
+      "url": "http://localhost:7014/api/ecosystems/status",
+      "method": "GET",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    },
+    {
+      "type": "getDictionary",
+      "keys": ["summary", "total", "online", "warning", "offline"]
+    },
+    {
+      "type": "speakText",
+      "text": "NEXIA supervise {total} écosystèmes. {online} en ligne, {warning} en alerte, {offline} hors ligne."
+    }
+  ],
+  "configuration": {
+    "allowedOnLockScreen": true,
+    "confirmBeforeRun": false,
+    "showInShareSheet": false,
+    "showInWidget": true
+  }
+}

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexia-prod
+  labels:
+    name: nexia-prod
+    environment: production
+    project: nexia-ecosystem
+    managed-by: nexia-supervisor
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexia-dev
+  labels:
+    name: nexia-dev
+    environment: development
+    project: nexia-ecosystem
+    managed-by: nexia-supervisor

@@ -1,0 +1,131 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mautic-custom
+  namespace: unified-tools
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mautic-custom
+  template:
+    metadata:
+      labels:
+        app: mautic-custom
+    spec:
+      containers:
+      - name: mautic
+        image: php:8.1-apache
+        ports:
+        - containerPort: 80
+        env:
+        # PostgreSQL Database Configuration
+        - name: MAUTIC_DB_DRIVER
+          value: "pdo_pgsql"
+        - name: MAUTIC_DB_HOST
+          value: "postgres-central.platform.svc.cluster.local"
+        - name: MAUTIC_DB_PORT
+          value: "5432"
+        - name: MAUTIC_DB_NAME
+          value: "fastcash_mautic"
+        - name: MAUTIC_DB_USER
+          value: "mautic_unified"
+        - name: MAUTIC_DB_PASSWORD
+          value: "mautic-postgres-2025"
+        - name: MAUTIC_DB_SERVER_VERSION
+          value: "14.18"
+        - name: MAUTIC_DB_CHARSET
+          value: "utf8"
+        # Site Configuration
+        - name: MAUTIC_SITE_URL
+          value: "http://localhost:3103"
+        - name: MAUTIC_SECRET_KEY
+          value: "fastcash_secret_key_2025_postgresql"
+        - name: MAUTIC_INSTALL_COMPLETE
+          value: "true"
+        # Additional Mautic Configuration
+        - name: MAUTIC_REQUEST_CONTEXT_HOST
+          value: "localhost"
+        - name: MAUTIC_REQUEST_CONTEXT_SCHEME
+          value: "http"
+        - name: MAUTIC_REQUEST_CONTEXT_BASE_URL
+          value: ""
+        - name: MAUTIC_REQUEST_CONTEXT_HTTP_PORT
+          value: "3103"
+        - name: MAUTIC_REQUEST_CONTEXT_HTTPS_PORT
+          value: "443"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          set -e
+          
+          # Install system dependencies
+          apt-get update
+          apt-get install -y \
+            wget \
+            unzip \
+            libpq-dev \
+            libzip-dev \
+            libicu-dev \
+            libfreetype6-dev \
+            libjpeg62-turbo-dev \
+            libpng-dev \
+            libonig-dev \
+            git \
+            cron \
+            supervisor
+            
+          # Install PHP extensions
+          docker-php-ext-install \
+            pdo_pgsql \
+            pdo_mysql \
+            mysqli \
+            zip \
+            intl \
+            mbstring \
+            bcmath
+            
+          # Configure GD extension
+          docker-php-ext-configure gd --with-freetype --with-jpeg
+          docker-php-ext-install gd
+          
+          # Enable Apache mod_rewrite
+          a2enmod rewrite
+          
+          # Download and install Mautic 5.2.3
+          if [ ! -f "/var/www/html/index.php" ]; then
+            echo "Installing Mautic 5.2.3..."
+            cd /tmp
+            wget https://github.com/mautic/mautic/releases/download/5.2.3/mautic-5.2.3.zip
+            unzip mautic-5.2.3.zip -d /var/www/html/
+            chown -R www-data:www-data /var/www/html
+            chmod -R 755 /var/www/html
+          fi
+          
+          # Set proper permissions
+          chown -R www-data:www-data /var/www/html
+          chmod -R 755 /var/www/html
+          
+          echo "Starting Apache..."
+          exec apache2-foreground
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mautic-custom
+  namespace: unified-tools
+spec:
+  selector:
+    app: mautic-custom
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP

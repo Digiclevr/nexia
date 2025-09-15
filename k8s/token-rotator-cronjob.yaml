@@ -1,0 +1,202 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: digitalocean-token-rotator
+  namespace: platform
+  labels:
+    app: token-rotator
+    component: security-automation
+spec:
+  schedule: "0 2 1 * *"  # 1er de chaque mois à 2h du matin
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: token-rotator
+            job: digitalocean-registry
+        spec:
+          restartPolicy: Never
+          serviceAccountName: token-rotator-sa
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            fsGroup: 65534
+          containers:
+          - name: token-rotator
+            image: alpine/curl:latest
+            imagePullPolicy: Always
+            env:
+            - name: DO_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: digitalocean-api-credentials
+                  key: token
+            - name: REGISTRY_NAME
+              value: "onlyoneapi"
+            - name: SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: notification-credentials
+                  key: slack-webhook
+                  optional: true
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "🔄 Starting DigitalOcean Registry Token Rotation - $(date)"
+              
+              # Function to send notification
+              send_notification() {
+                local status=$1
+                local message=$2
+                if [ -n "$SLACK_WEBHOOK_URL" ]; then
+                  curl -X POST -H 'Content-type: application/json' \
+                    --data "{\"text\":\"🔐 Token Rotation $status: $message\"}" \
+                    "$SLACK_WEBHOOK_URL" || echo "Failed to send Slack notification"
+                fi
+                echo "$status: $message"
+              }
+              
+              # Generate new registry credentials
+              echo "📋 Generating new registry credentials..."
+              RESPONSE=$(curl -s -X POST \
+                -H "Authorization: Bearer $DO_API_TOKEN" \
+                -H "Content-Type: application/json" \
+                "https://api.digitalocean.com/v2/registry/$REGISTRY_NAME/docker-credentials" \
+                -d '{"read_write": true, "expiry_seconds": 2592000}')
+              
+              if [ $? -ne 0 ]; then
+                send_notification "FAILED" "Could not generate new DigitalOcean registry credentials"
+                exit 1
+              fi
+              
+              # Extract docker config JSON
+              DOCKER_CONFIG=$(echo "$RESPONSE" | grep -o '"auths":{[^}]*}[^}]*}' | sed 's/^/{"/' | sed 's/$/}/')
+              
+              if [ -z "$DOCKER_CONFIG" ]; then
+                send_notification "FAILED" "Invalid response from DigitalOcean API"
+                exit 1
+              fi
+              
+              echo "✅ New credentials generated successfully"
+              
+              # List of namespaces to update (based on your infrastructure)
+              NAMESPACES="nexia api-pool api applications backend-pool onlyoneapi platform shared-infra"
+              
+              SUCCESS_COUNT=0
+              TOTAL_COUNT=0
+              
+              # Update secrets in all namespaces
+              for ns in $NAMESPACES; do
+                echo "🔄 Updating registry secret in namespace: $ns"
+                
+                # Check if namespace exists
+                if ! kubectl get namespace "$ns" >/dev/null 2>&1; then
+                  echo "⚠️ Namespace $ns does not exist, skipping..."
+                  continue
+                fi
+                
+                TOTAL_COUNT=$((TOTAL_COUNT + 1))
+                
+                # Create/update the secret
+                if kubectl create secret docker-registry registry-blueocean-rotated \
+                  --docker-server=registry.digitalocean.com \
+                  --docker-username=token \
+                  --docker-password="$(echo "$DOCKER_CONFIG" | base64 -w 0)" \
+                  --namespace="$ns" \
+                  --dry-run=client -o yaml | kubectl apply -f -; then
+                  
+                  echo "✅ Successfully updated secret in namespace: $ns"
+                  SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+                else
+                  echo "❌ Failed to update secret in namespace: $ns"
+                fi
+              done
+              
+              # Validation test
+              echo "🧪 Testing new credentials..."
+              TEST_RESULT=$(kubectl run token-test-$(date +%s) --rm -i --restart=Never \
+                --image=registry.digitalocean.com/onlyoneapi/empire-dashboard:latest \
+                --image-pull-policy=Always \
+                --namespace=nexia \
+                --overrides='{"spec":{"imagePullSecrets":[{"name":"registry-blueocean-rotated"}]}}' \
+                -- echo "Token test successful" 2>/dev/null || echo "Token test failed")
+              
+              if echo "$TEST_RESULT" | grep -q "successful"; then
+                send_notification "SUCCESS" "Token rotation completed successfully. Updated $SUCCESS_COUNT/$TOTAL_COUNT namespaces. Validation passed."
+                echo "🎉 Token rotation completed successfully!"
+              else
+                send_notification "WARNING" "Token rotation completed but validation failed. Updated $SUCCESS_COUNT/$TOTAL_COUNT namespaces."
+                echo "⚠️ Token rotation completed but validation failed"
+                exit 1
+              fi
+              
+              echo "📊 Rotation Summary:"
+              echo "  - Namespaces updated: $SUCCESS_COUNT/$TOTAL_COUNT"
+              echo "  - Validation: $(echo "$TEST_RESULT" | grep -q "successful" && echo "PASSED" || echo "FAILED")"
+              echo "  - Completed at: $(date)"
+            resources:
+              requests:
+                memory: "64Mi"
+                cpu: "100m"
+              limits:
+                memory: "128Mi"
+                cpu: "200m"
+            volumeMounts:
+            - name: kubectl-config
+              mountPath: /root/.kube
+              readOnly: true
+          volumes:
+          - name: kubectl-config
+            secret:
+              secretName: kubectl-config
+              optional: true
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: token-rotator-sa
+  namespace: platform
+  labels:
+    app: token-rotator
+    component: security-automation
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: token-rotator-role
+  labels:
+    app: token-rotator
+    component: security-automation
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["create", "update", "patch", "get", "list"]
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["create", "delete", "get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: token-rotator-binding
+  labels:
+    app: token-rotator
+    component: security-automation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: token-rotator-role
+subjects:
+- kind: ServiceAccount
+  name: token-rotator-sa
+  namespace: platform

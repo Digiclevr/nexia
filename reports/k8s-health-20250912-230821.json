@@ -1,0 +1,10 @@
+{
+    "timestamp": "2025-09-12T21:08:35Z",
+    "overall_score": 76,
+    "infrastructure": {"score": 95, "status": "🟢", "category": "Infrastructure", "issues": []},
+    "applications": {"score": 55, "status": "🟡", "category": "Applications", "issues": ["       3 pods in crash state","       1 deployments not ready"]},
+    "storage": {"score": 80, "status": "🟢", "category": "Storage", "issues": ["6 volumes need cleanup"]},
+    "network": {"score": 75, "status": "🟡", "category": "Network", "issues": ["      43 NetworkPolicies - possible over-isolation"]},
+    "security": {"score": 80, "status": "🟢", "category": "Security", "issues": []},
+    "monitoring": {"score": 75, "status": "🟢", "category": "Monitoring", "issues": ["      40 warning events"]}
+}

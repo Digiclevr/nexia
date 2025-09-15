@@ -1,0 +1,84 @@
+=== SAUVEGARDE FENÊTRE TERMINAL 4 ===
+Date: Mon Sep 15 00:10:15 CEST 2025
+Application: Terminal.app
+Fenêtre: 4/8
+Nom de fenêtre: ludovicpilet — ✳ Priority Levels — claude TMPDIR=/var/folders/66/5b4kr9n55bjgr7gsb6p38w0w0000gn/T/ ▸ esbuild — 183×38
+Nombre d'onglets: 1
+======================================
+
+=== INFORMATIONS ONGLETS ===
+
+  Tab 1: Tab_1
+
+=== HISTORIQUE SHELL GLOBAL (50 dernières commandes) ===
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && git clone https://github.com/open-webui/open-webui app
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && git clone https://github.com/open-webui/open-webui app
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda create -y -p /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env python=3.11  && conda deactivate && conda deactivate && conda deactivate && conda activate /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env && conda install -y -c conda-forge nodejs=20.12.2
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env/bin/python --version && /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env/bin/python -m venv env
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env && /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env/bin/node --version && /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env/bin/npm i && /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env/bin/npm run build
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env && source /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/env/bin/activate /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/env && pip install -r requirements.txt
+echo pinokio
+echo pinokio
+echo pinokio
+echo pinokio
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && env
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && conda list
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && pip list
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && brew list -1
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && xcode-select -p
+echo pinokio
+echo pinokio
+echo pinokio
+echo pinokio
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate base && source /Users/ludovicpilet/pinokio/api/storydiffusion-comics.git/app/env/bin/activate /Users/ludovicpilet/pinokio/api/storydiffusion-comics.git/app/env && python app.py
+eval "$(conda shell.bash hook)" && conda deactivate && conda deactivate && conda deactivate && conda activate /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/conda_env && source /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/env/bin/activate /Users/ludovicpilet/pinokio/api/open-webui.git/app/backend/env && bash start.sh
+python3 -c "print('✅ Hello depuis Bash')"
+python3 -u -c "print('✅ Hello avec -u')"
+echo 'print("✅ Python marche enfin")' > testprint.py
+python3 -u testprint.py
+exit
+ls
+exit
+exit
+quit
+exit
+
+=== PROCESSUS TERMINAL ACTIFS ===
+ludovicpilet      1353   3.4  0.7 412720448 185664   ??  S    11:08AM  22:41.66 /System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal
+
+=== VARIABLES D'ENVIRONNEMENT COURANTES ===
+USER: ludovicpilet
+HOME: /Users/ludovicpilet
+SHELL: /bin/zsh
+PWD: /Users/ludovicpilet/PROJECTS/NEXIA
+PATH: /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+=== SESSIONS TTY ACTIVES ===
+ludovicpilet     console      Sep 14 11:07 
+ludovicpilet     ttys000      Sep 14 11:08 
+ludovicpilet     ttys001      Sep 14 11:08 
+ludovicpilet     ttys002      Sep 14 11:24 
+ludovicpilet     ttys003      Sep 14 11:25 
+ludovicpilet     ttys004      Sep 14 11:39 
+ludovicpilet     ttys005      Sep 14 12:09 
+ludovicpilet     ttys006      Sep 14 12:16 
+ludovicpilet     ttys007      Sep 14 13:12 

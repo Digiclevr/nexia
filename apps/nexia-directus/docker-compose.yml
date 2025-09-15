@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  nexia-directus:
+    image: directus/directus:latest
+    container_name: nexia-directus
+    ports:
+      - "7012:8055"
+    environment:
+      # Security
+      KEY: "nexia-directus-key-super-secure-2025"
+      SECRET: "nexia-directus-secret-super-secure-2025"
+      
+      # Database Configuration (using BlueOcean shared PostgreSQL)
+      DB_CLIENT: "pg"
+      DB_HOST: "postgres-central.platform.svc.cluster.local"
+      DB_PORT: "5432"
+      DB_DATABASE: "nexia_directus_production"
+      DB_USER: "postgres"
+      DB_PASSWORD: "postgres"
+      
+      # Cache Configuration (using BlueOcean shared Redis)
+      CACHE_ENABLED: "true"
+      CACHE_STORE: "redis"
+      REDIS: "redis://platform-pool-redis-master.platform.svc.cluster.local:6379"
+      REDIS_NAMESPACE: "nexia-directus:"
+      
+      # Admin Configuration
+      ADMIN_EMAIL: "admin@nexia.com"
+      ADMIN_PASSWORD: "NexiaAdmin2025!"
+      
+      # Public Configuration
+      PUBLIC_URL: "http://localhost:7012"
+      CORS_ENABLED: "true"
+      CORS_ORIGIN: "http://localhost:7014,http://localhost:7013"
+      
+      # Rate Limiting
+      RATE_LIMITER_ENABLED: "true"
+      RATE_LIMITER_POINTS: "100"
+      RATE_LIMITER_DURATION: "1"
+      
+      # Token Configuration
+      ACCESS_TOKEN_TTL: "30m"
+      REFRESH_TOKEN_TTL: "30d"
+      REFRESH_TOKEN_COOKIE_SECURE: "false"
+      REFRESH_TOKEN_COOKIE_SAME_SITE: "lax"
+      SESSION_COOKIE_TTL: "7d"
+      SESSION_COOKIE_SECURE: "false"
+      SESSION_COOKIE_SAME_SITE: "lax"
+      
+      # Logging
+      LOG_LEVEL: "info"
+      LOG_STYLE: "pretty"
+      
+      # Email Configuration
+      EMAIL_FROM: "nexia@digiclevr.com"
+      EMAIL_TRANSPORT: "smtp"
+      EMAIL_SMTP_HOST: "smtp.digiclevr.com"
+      EMAIL_SMTP_PORT: "587"
+      EMAIL_SMTP_USER: "nexia@digiclevr.com"
+      EMAIL_SMTP_PASSWORD: "placeholder-password"
+      EMAIL_SMTP_SECURE: "false"
+      
+      # Storage Configuration
+      STORAGE_LOCATIONS: "local"
+      STORAGE_LOCAL_DRIVER: "local"
+      STORAGE_LOCAL_ROOT: "/directus/uploads"
+      
+      # NEXIA Specific Configuration
+      NEXIA_SUPERVISOR_URL: "http://localhost:7014"
+      NEXIA_VOICE_URL: "http://localhost:7013"
+      NEXIA_MODE: "development"
+      
+    volumes:
+      - nexia_directus_uploads:/directus/uploads
+      - nexia_directus_database:/directus/database
+      - nexia_directus_extensions:/directus/extensions
+      
+    networks:
+      - nexia-network
+      
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8055/server/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+      
+    restart: unless-stopped
+    
+  nexia-postgres:
+    image: postgres:15-alpine
+    container_name: nexia-postgres
+    environment:
+      POSTGRES_DB: nexia_directus_production
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - nexia_postgres_data:/var/lib/postgresql/data
+    networks:
+      - nexia-network
+    restart: unless-stopped
+    
+  nexia-redis:
+    image: redis:7-alpine
+    container_name: nexia-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - nexia_redis_data:/data
+    networks:
+      - nexia-network
+    restart: unless-stopped
+
+volumes:
+  nexia_directus_uploads:
+  nexia_directus_database:
+  nexia_directus_extensions:
+  nexia_postgres_data:
+  nexia_redis_data:
+
+networks:
+  nexia-network:
+    driver: bridge

@@ -1,0 +1,122 @@
+/* OnlyOneAPI Page Styles */
+
+.onlyoneapi-page {
+  padding: 2rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  min-height: 100vh;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 2rem 0;
+  background: linear-gradient(135deg, #0050a5 0%, #2680eb 100%);
+  color: white;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 80, 165, 0.3);
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.page-subtitle {
+  font-size: 1.125rem;
+  opacity: 0.9;
+  line-height: 1.6;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .onlyoneapi-page {
+    padding: 1rem;
+  }
+  
+  .page-header {
+    padding: 1.5rem 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .page-subtitle {
+    font-size: 1rem;
+  }
+}
+
+/* Summary Top Section */
+.summary-top {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.summary-top .summary-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.summary-top .summary-card.urgent {
+  border-left: 4px solid #ef4444;
+  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 10%, white 10%);
+}
+
+.summary-top .summary-card.progress {
+  border-left: 4px solid #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 10%, white 10%);
+}
+
+.summary-top .summary-card.coordination {
+  border-left: 4px solid #10b981;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 10%, white 10%);
+}
+
+.summary-top .summary-card h3 {
+  margin: 0 0 0.75rem 0;
+  color: #1e293b;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.summary-top .summary-card p,
+.summary-top .summary-card li {
+  margin: 0 0 0.5rem 0;
+  color: #64748b;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.summary-top .summary-card p:last-child,
+.summary-top .summary-card li:last-child {
+  margin-bottom: 0;
+}
+
+.summary-top .summary-card ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.summary-top .summary-card strong {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+/* Responsive pour summary top */
+@media (max-width: 768px) {
+  .summary-top {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+}

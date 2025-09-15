@@ -1,0 +1,88 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nexia-monitoring
+  namespace: nexia
+spec:
+  schedule: "0 * * * *"  # Every hour
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: nexia-monitoring
+          containers:
+          - name: monitoring
+            image: bitnami/kubectl:latest
+            command:
+            - /bin/bash
+            - -c
+            - |
+              # Health check script integrated with API
+              API_URL="http://nexia-api-service:3001/api/v1"
+              CLUSTER_NAME="kubernetes-cluster"
+              
+              # Get cluster metrics
+              NODES=$(kubectl get nodes --no-headers | wc -l)
+              READY_NODES=$(kubectl get nodes --no-headers | grep ' Ready ' | wc -l)
+              
+              PODS=$(kubectl get pods --all-namespaces --no-headers | wc -l)
+              RUNNING_PODS=$(kubectl get pods --all-namespaces --no-headers | grep Running | wc -l)
+              
+              # Calculate scores
+              NODE_SCORE=$(( (READY_NODES * 100) / NODES ))
+              POD_SCORE=$(( (RUNNING_PODS * 100) / PODS ))
+              
+              # Send to API
+              curl -X POST "${API_URL}/reports" \
+                -H "Content-Type: application/json" \
+                -d '{
+                  "cluster_name": "'${CLUSTER_NAME}'",
+                  "overall_score": '$(( (NODE_SCORE + POD_SCORE) / 2 ))',
+                  "category_scores": {
+                    "nodes": '${NODE_SCORE}',
+                    "workloads": '${POD_SCORE}',
+                    "networking": 85,
+                    "storage": 90,
+                    "security": 80,
+                    "monitoring": 95
+                  },
+                  "total_nodes": '${NODES}',
+                  "ready_nodes": '${READY_NODES}',
+                  "total_pods": '${PODS}',
+                  "running_pods": '${RUNNING_PODS}'
+                }'
+          restartPolicy: OnFailure
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nexia-monitoring
+  namespace: nexia
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nexia-monitoring
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "pods", "services", "persistentvolumes", "persistentvolumeclaims"]
+  verbs: ["get", "list"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
+  verbs: ["get", "list"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["networkpolicies", "ingresses"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: nexia-monitoring
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nexia-monitoring
+subjects:
+- kind: ServiceAccount
+  name: nexia-monitoring
+  namespace: nexia

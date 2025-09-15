@@ -1,0 +1,40 @@
+{
+  "name": "NEXIA Deploy BlueOcean",
+  "description": "Déclenche un déploiement de l'écosystème BlueOcean",
+  "icon": "🚀",
+  "phrase": "Nexia déploie BlueOcean",
+  "actions": [
+    {
+      "type": "confirmAction",
+      "message": "Confirmer le déploiement de BlueOcean ?",
+      "confirmText": "Déployer",
+      "cancelText": "Annuler"
+    },
+    {
+      "type": "getURL",
+      "url": "http://localhost:7014/api/control/deploy",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "ecosystem": "blueocean",
+        "action": "deploy"
+      }
+    },
+    {
+      "type": "getDictionary",
+      "keys": ["success", "message", "taskId"]
+    },
+    {
+      "type": "speakText",
+      "text": "Déploiement BlueOcean {success ? 'initié' : 'échoué'}. {message}. ID de tâche {taskId}."
+    }
+  ],
+  "configuration": {
+    "allowedOnLockScreen": false,
+    "confirmBeforeRun": true,
+    "showInShareSheet": false,
+    "showInWidget": false
+  }
+}

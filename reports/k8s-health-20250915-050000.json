@@ -1,0 +1,10 @@
+{
+    "timestamp": "2025-09-15T03:00:05Z",
+    "overall_score": 65,
+    "infrastructure": ,
+    "applications": {"score": 70, "status": "🟡", "category": "Applications", "issues": []},
+    "storage": {"score": 85, "status": "🟢", "category": "Storage", "issues": []},
+    "network": {"score": 75, "status": "🟡", "category": "Network", "issues": []},
+    "security": {"score": 80, "status": "🟢", "category": "Security", "issues": []},
+    "monitoring": {"score": 85, "status": "🟢", "category": "Monitoring", "issues": []}
+}
