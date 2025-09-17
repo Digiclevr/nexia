@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       // Call local Node.js intelligence service
       intelligenceResult = await processWithLocalIntelligence(content, source || 'nexia-supervisor');
     } catch (error) {
-      console.warn('Local intelligence service unavailable, using mock data:', error.message);
+      console.warn('Local intelligence service unavailable, using mock data:', error instanceof Error ? error.message : error);
       
       // Fallback to mock data
       intelligenceResult = {
@@ -155,7 +155,7 @@ async function processWithLocalIntelligence(content: string, source: string) {
     });
 
     child.on('error', (error) => {
-      reject(new Error(`Failed to spawn intelligence service: ${error.message}`));
+      reject(new Error(`Failed to spawn intelligence service: ${error instanceof Error ? error.message : error}`));
     });
   });
 }
