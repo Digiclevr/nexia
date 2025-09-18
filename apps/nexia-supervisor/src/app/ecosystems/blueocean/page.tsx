@@ -431,7 +431,7 @@ export default function BlueOceanPage() {
                   Anomalies Détectées ({service.anomalies.length})
                 </h4>
                 <div className="space-y-1">
-                  {service.anomalies.slice(0, 3).map((anomaly, idx) => (
+                  {service.anomalies.slice(0, 3).map((anomaly: any, idx: number) => (
                     <div key={idx} className={`text-xs p-2 rounded flex items-start ${
                       anomaly.severity === 'critical' ? 'bg-red-100 text-red-700' :
                       anomaly.severity === 'warning' ? 'bg-yellow-100 text-yellow-700' :
