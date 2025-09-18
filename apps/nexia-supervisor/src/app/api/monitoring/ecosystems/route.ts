@@ -41,7 +41,7 @@ async function checkBlueOceanServices() {
       try {
         const response = await fetch(service.healthUrl, { 
           method: 'GET',
-          timeout: 3000
+          signal: AbortSignal.timeout(3000)
         })
         const isHealthy = response.ok
         const data = response.ok ? await response.json() : null
@@ -96,7 +96,7 @@ async function checkOnlyOneAPIServices() {
       try {
         const response = await fetch(service.healthUrl, { 
           method: 'GET',
-          timeout: 3000
+          signal: AbortSignal.timeout(3000)
         })
         const isHealthy = response.ok
         
