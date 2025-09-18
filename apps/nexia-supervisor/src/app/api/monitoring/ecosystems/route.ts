@@ -58,7 +58,7 @@ async function checkBlueOceanServices() {
           name: service.name,
           port: service.port,
           status: 'down',
-          error: error.message,
+          error: error instanceof Error ? error.message : String(error),
           health_data: null
         }
       }
