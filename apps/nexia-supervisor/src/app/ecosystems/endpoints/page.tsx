@@ -341,7 +341,7 @@ export default function EndpointsPage() {
               Scans en Cours
             </h3>
             <div className="space-y-4">
-              {finalData.scanStatus.map((scan, index) => (
+              {finalData.scanStatus.map((scan: any, index: number) => (
                 <div key={index} className="border-l-4 border-blue-500 pl-4">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium text-gray-900 text-sm">{scan.name}</h4>
