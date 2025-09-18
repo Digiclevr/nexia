@@ -219,7 +219,7 @@ export default function DashboardPage() {
               <div key={index} className="flex items-center justify-between p-2 rounded hover:bg-gray-50">
                 <div className="flex items-center space-x-3">
                   <div className={`w-2 h-2 rounded-full ${
-                    app.status === 'running' ? 'bg-green-500' : 'bg-red-500'
+                    (app as any).status === 'running' ? 'bg-green-500' : 'bg-red-500'
                   }`} />
                   <span className="text-sm font-medium text-gray-900">
                     {app.name}
