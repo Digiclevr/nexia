@@ -185,213 +185,229 @@ export default function OnlyOneAPIPage() {
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-6">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-4">
-          <div className="flex items-center">
-            <Database className="h-6 w-6 text-green-600 mr-3" />
-            <div>
-              <h1 className="text-xl font-semibold text-nexia-dark">OnlyOneAPI Platform</h1>
-              <p className="text-sm text-nexia-600">SaaS B2B • 4 sites web • 271 endpoints API</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      {/* Modern Header with Gradient */}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl">
+                  <Globe className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                    OnlyOneAPI Platform
+                  </h1>
+                  <p className="text-sm text-gray-500">SaaS B2B • 4 sites web • 401 endpoints API</p>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-3 mt-4 sm:mt-0">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs text-nexia-500">Paris • Temps Réel</p>
-              <p className="text-sm font-medium text-nexia-dark">{currentTime}</p>
+            
+            <div className="flex items-center space-x-4">
+              <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-600">
+                <Clock className="h-4 w-4" />
+                <span>{currentTime}</span>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1 px-3 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span>Platform Opérationnel</span>
+                </div>
+                
+                <button 
+                  className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
+                  onClick={() => window.location.reload()}
+                >
+                  <RefreshCw className="h-5 w-5" />
+                </button>
+              </div>
             </div>
-            <button className="flex items-center px-3 py-2 text-sm font-medium text-nexia-600 bg-white border border-nexia-300 rounded-md hover:bg-nexia-50">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Actualiser
-            </button>
           </div>
         </div>
       </header>
 
-      {/* Global Status */}
-      <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-lg p-6 mb-6 text-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold mb-2">Platform OnlyOneAPI</h2>
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center">
-                <CheckCircle className="h-5 w-5 mr-2" />
-                <span>3 sites opérationnels</span>
-              </div>
-              <div className="flex items-center">
-                <AlertTriangle className="h-5 w-5 mr-2" />
-                <span>1 site en attention</span>
-              </div>
-              <div className="flex items-center">
-                <Database className="h-5 w-5 mr-2" />
-                <span>271 endpoints API</span>
-              </div>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-3xl font-bold">99.3%</p>
-            <p className="text-sm opacity-90">Disponibilité moyenne</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Business Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {businessMetrics.map((metric, index) => (
-          <div key={index} className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-nexia-600">{metric.category}</h3>
-              <span className={`text-xs px-2 py-1 rounded-full ${ 
-                metric.trend.startsWith('+') ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
-              }`}>
-                {metric.trend}
-              </span>
-            </div>
-            <div className="mb-2">
-              <p className="text-xl font-bold text-nexia-dark">{metric.current}</p>
-              <p className="text-sm text-nexia-500">Objectif: {metric.target}</p>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-nexia-primary h-2 rounded-full" 
-                style={{ width: `${metric.progress}%` }}
-              ></div>
-            </div>
-            <p className="text-xs text-nexia-500 mt-1">{metric.progress.toFixed(1)}% de l'objectif</p>
-          </div>
-        ))}
-      </div>
-
-      {/* API Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-        {apiMetrics.map((metric, index) => (
-          <div key={index} className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="flex items-center justify-between mb-2">
-              {metric.icon}
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                metric.trend.startsWith('+') || metric.trend.startsWith('-') && !metric.trend.includes('ms') && !metric.trend.includes('%')
-                  ? 'bg-green-100 text-green-600' 
-                  : 'bg-blue-100 text-blue-600'
-              }`}>
-                {metric.trend}
-              </span>
-            </div>
-            <div>
-              <p className="text-lg font-bold text-nexia-dark">{metric.value}</p>
-              <p className="text-xs text-nexia-500">{metric.description}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Sites Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {onlyOneAPISites.map((site) => (
-          <div 
-            key={site.id} 
-            className={`bg-white border rounded-lg p-6 transition-all cursor-pointer ${
-              selectedSite === site.id 
-                ? 'border-green-500 ring-2 ring-green-500/20' 
-                : 'border-gray-200 hover:border-green-300'
-            }`}
-            onClick={() => setSelectedSite(site.id)}
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <div className="flex items-center mb-2">
-                  {getStatusIcon(site.status)}
-                  <h3 className="ml-2 text-lg font-semibold text-nexia-dark">{site.name}</h3>
-                </div>
-                <p className="text-sm text-nexia-600 mb-2">{site.description}</p>
-                <div className="flex items-center space-x-4 text-xs text-nexia-500">
-                  <span>{site.framework}</span>
-                  <span>Port {site.port}</span>
-                  <span>Uptime {site.uptime}</span>
-                </div>
-              </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(site.status)}`}>
-                {getStatusText(site.status)}
-              </span>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <p className="text-xs text-nexia-500 uppercase tracking-wider">Performance</p>
-                <div className="mt-1 space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-sm">Lighthouse</span>
-                    <span className="text-sm font-medium">{site.lighthouse}/100</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Page Speed</span>
-                    <span className="text-sm font-medium">{site.pagespeed}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Conversion</span>
-                    <span className="text-sm font-medium">{site.conversion}</span>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-nexia-500 uppercase tracking-wider">Business</p>
-                <div className="mt-1 space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-sm">Traffic</span>
-                    <span className="text-sm font-medium">{site.traffic.split('/')[0]}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Revenue</span>
-                    <span className="text-sm font-medium">{site.revenue}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Version</span>
-                    <span className="text-sm font-medium">{site.version}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="border-t border-gray-200 pt-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-nexia-500">URL: {site.url.replace('https://', '')}</span>
-                <span className="text-nexia-400">Déployé {site.lastDeploy}</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Recent Activity */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-nexia-dark">Activité Platform</h2>
-          <button className="flex items-center px-3 py-1 text-sm text-nexia-600 hover:text-nexia-800">
-            <Eye className="h-4 w-4 mr-1" />
-            Voir tout
-          </button>
-        </div>
+      {/* Main Dashboard Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        <div className="space-y-4">
-          {recentActivity.map((activity) => (
-            <div key={activity.id} className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50">
-              <div className="flex-shrink-0 mt-1">
-                {getEventStatusIcon(activity.status)}
+        {/* Hero Status Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Revenue ARR</p>
+                <p className="text-3xl font-bold text-green-600">€93.5k</p>
+                <p className="text-sm text-gray-500 mt-1">+12% ce mois</p>
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-nexia-dark">{activity.event}</p>
-                  <span className="text-xs text-nexia-500">{activity.timestamp}</span>
+              <div className="p-3 bg-green-100 rounded-xl">
+                <DollarSign className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Sites Web</p>
+                <p className="text-3xl font-bold text-blue-600">4</p>
+                <p className="text-sm text-gray-500 mt-1">Applications actives</p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <Globe className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">API Endpoints</p>
+                <p className="text-3xl font-bold text-purple-600">401</p>
+                <p className="text-sm text-gray-500 mt-1">Endpoints commercialisés</p>
+              </div>
+              <div className="p-3 bg-purple-100 rounded-xl">
+                <Code className="h-6 w-6 text-purple-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Clients B2B</p>
+                <p className="text-3xl font-bold text-emerald-600">526</p>
+                <p className="text-sm text-gray-500 mt-1">Utilisateurs actifs</p>
+              </div>
+              <div className="p-3 bg-emerald-100 rounded-xl">
+                <Users className="h-6 w-6 text-emerald-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* OnlyOneAPI Sites Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {onlyOneAPISites.map((site, index) => (
+            <div key={index} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-4">
+                  <div className={`p-3 bg-${site.color}-100 rounded-xl`}>
+                    {React.cloneElement(site.icon, { 
+                      className: `h-6 w-6 text-${site.color}-600` 
+                    })}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{site.name}</h3>
+                    <p className="text-sm text-gray-500">{site.description}</p>
+                  </div>
                 </div>
-                <p className="text-sm text-nexia-600 mt-1">{activity.details}</p>
+                
+                <div className="flex items-center space-x-2">
+                  {getStatusIcon(site.status)}
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(site.status)}`}>
+                    {getStatusText(site.status)}
+                  </span>
+                </div>
               </div>
-              <span className={`px-2 py-1 text-xs rounded-full ${getEventTypeColor(activity.type)}`}>
-                {activity.type}
-              </span>
+              
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="text-center p-3 bg-gray-50 rounded-xl">
+                  <p className="text-sm text-gray-600">Services</p>
+                  <p className="text-xl font-bold text-gray-900">{site.services}</p>
+                </div>
+                <div className="text-center p-3 bg-gray-50 rounded-xl">
+                  <p className="text-sm text-gray-600">Uptime</p>
+                  <p className="text-xl font-bold text-green-600">{site.uptime}</p>
+                </div>
+                <div className="text-center p-3 bg-gray-50 rounded-xl">
+                  <p className="text-sm text-gray-600">Check</p>
+                  <p className="text-sm font-medium text-gray-700">{site.lastCheck}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="p-3 bg-green-50 rounded-xl">
+                  <p className="text-sm text-green-600">Revenue</p>
+                  <p className="text-lg font-bold text-green-800">{site.revenue}</p>
+                  <p className="text-xs text-green-600">{site.growth}</p>
+                </div>
+                <div className="p-3 bg-blue-50 rounded-xl">
+                  <p className="text-sm text-blue-600">Clients</p>
+                  <p className="text-lg font-bold text-blue-800">{site.clients}</p>
+                  <p className="text-xs text-blue-600">Utilisateurs</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <span className="text-sm text-gray-600">Endpoint:</span>
+                <code className="text-sm font-mono text-gray-800 bg-white px-2 py-1 rounded">
+                  {site.url}
+                </code>
+                <span className="text-xs text-gray-500">Port {site.port}</span>
+              </div>
             </div>
           ))}
         </div>
-      </div>
+
+        {/* System Metrics Modern Grid */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-gray-100 rounded-lg">
+                <BarChart3 className="h-5 w-5 text-gray-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900">Infrastructure OnlyOneAPI</h2>
+            </div>
+            <div className="text-sm text-gray-500">Temps réel</div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {systemMetrics.map((metric, index) => (
+              <div key={index} className="p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-50 rounded-lg">
+                      {React.cloneElement(metric.icon, { className: 'h-5 w-5 text-blue-600' })}
+                    </div>
+                    <h3 className="font-medium text-gray-900">{metric.name}</h3>
+                  </div>
+                  {getStatusIcon(metric.status)}
+                </div>
+                
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{metric.value}</p>
+                    <p className="text-sm text-gray-500">Performance</p>
+                  </div>
+                  
+                  {/* Mini progress bar */}
+                  <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full ${
+                        metric.status === 'healthy' ? 'bg-green-500' : 
+                        metric.status === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}
+                      style={{ width: metric.value }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer Info */}
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-500">
+            🕐 <strong>Paris:</strong> {currentTime.split('|')[0]?.trim() || currentTime} | 
+            <strong> USA:</strong> {currentTime.split('|')[1]?.trim() || 'Calcul en cours...'}
+          </p>
+          <p className="text-xs text-gray-400 mt-2">
+            OnlyOneAPI SaaS Platform • Supervision temps réel • Auto-refresh 5s
+          </p>
+        </div>
+      </main>
     </div>
   )
 }

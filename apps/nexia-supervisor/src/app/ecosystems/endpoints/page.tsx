@@ -321,7 +321,7 @@ export default function EndpointsPage() {
                     <span>🕐 Updated {finding.metrics.lastUpdate}</span>
                   </div>
                   <div className="flex space-x-2">
-                    {finding.tags.map((tag, index) => (
+                    {finding.tags.map((tag: string, index: number) => (
                       <span key={index} className="bg-gray-100 px-2 py-1 rounded text-xs">
                         {tag}
                       </span>
