@@ -186,12 +186,12 @@ export default function DashboardPage() {
             {Object.entries(ecosystemStatus).map(([name, status]) => (
               <div key={name} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
                 <div className="flex items-center space-x-3">
-                  <div className={`w-3 h-3 rounded-full ${getStatusColor(status as string)}`} />
+                  <div className={`w-3 h-3 rounded-full ${getStatusColor(status as any)}`} />
                   <span className="font-medium text-gray-900 capitalize">
                     {name.replace('_', ' ')}
                   </span>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded-full ${getStatusColorText(status as string)}`}>
+                <span className={`text-xs px-2 py-1 rounded-full ${getStatusColorText(status as any)}`}>
                   {status}
                 </span>
               </div>
