@@ -1,0 +1,272 @@
+---
+# Namespace pour Mixpost
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mixpost
+  labels:
+    app: mixpost
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
+---
+# Secret pour Mixpost
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mixpost-secrets
+  namespace: mixpost
+type: Opaque
+stringData:
+  APP_KEY: "base64:M1xpost2025BlueOceanSecretKey=="
+  DB_PASSWORD: "mixpost-password-2025"
+  REDIS_PASSWORD: "mixpost-redis-2025"
+  MAIL_PASSWORD: "mixpost-mail-2025"
+---
+# ConfigMap pour Mixpost
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mixpost-config
+  namespace: mixpost
+data:
+  # App config
+  APP_NAME: "Mixpost"
+  APP_ENV: "production"
+  APP_DEBUG: "false"
+  APP_URL: "https://mixpost.blueocean.local"
+  
+  # Database config - utilise PostgreSQL central
+  DB_CONNECTION: "pgsql"
+  DB_HOST: "postgres-central.platform.svc.cluster.local"
+  DB_PORT: "5432"
+  DB_DATABASE: "mixpost"
+  DB_USERNAME: "mixpost"
+  
+  # Redis config - utilise Redis central
+  REDIS_HOST: "platform-pool-redis-master.platform.svc.cluster.local"
+  REDIS_PORT: "6379"
+  CACHE_DRIVER: "redis"
+  SESSION_DRIVER: "redis"
+  QUEUE_CONNECTION: "redis"
+  
+  # Mail config
+  MAIL_MAILER: "smtp"
+  MAIL_HOST: "smtp.gmail.com"
+  MAIL_PORT: "587"
+  MAIL_USERNAME: "noreply@blueocean.local"
+  MAIL_ENCRYPTION: "tls"
+  MAIL_FROM_ADDRESS: "noreply@blueocean.local"
+  MAIL_FROM_NAME: "Mixpost BlueOcean"
+  
+  # Filesystem
+  FILESYSTEM_DISK: "local"
+  
+  # Broadcasting
+  BROADCAST_DRIVER: "log"
+  
+  # Laravel optimization
+  LOG_CHANNEL: "stack"
+  LOG_DEPRECATIONS_CHANNEL: "null"
+  LOG_LEVEL: "error"
+---
+# PVC pour Mixpost
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mixpost-storage
+  namespace: mixpost
+  labels:
+    app: mixpost
+    component: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: do-block-storage
+  resources:
+    requests:
+      storage: 3Gi
+---
+# Deployment Mixpost
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mixpost
+  namespace: mixpost
+  labels:
+    app: mixpost
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mixpost
+  template:
+    metadata:
+      labels:
+        app: mixpost
+    spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: applications-pool
+      initContainers:
+      - name: wait-for-db
+        image: postgres:15
+        command:
+        - sh
+        - -c
+        - |
+          until pg_isready -h postgres-central.platform.svc.cluster.local -p 5432 -U postgres; do
+            echo "Waiting for database..."
+            sleep 2
+          done
+      - name: mixpost-init
+        image: inovector/mixpost:latest
+        command:
+        - sh
+        - -c
+        - |
+          echo "Running Laravel setup..."
+          php artisan migrate --force || true
+          php artisan config:cache || true
+          php artisan route:cache || true
+          php artisan view:cache || true
+        envFrom:
+        - configMapRef:
+            name: mixpost-config
+        - secretRef:
+            name: mixpost-secrets
+        volumeMounts:
+        - name: mixpost-data
+          mountPath: /var/www/html/storage
+      containers:
+      - name: mixpost
+        image: inovector/mixpost:latest
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        envFrom:
+        - configMapRef:
+            name: mixpost-config
+        - secretRef:
+            name: mixpost-secrets
+        volumeMounts:
+        - name: mixpost-data
+          mountPath: /var/www/html/storage
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 120
+          periodSeconds: 60
+          timeoutSeconds: 10
+      volumes:
+      - name: mixpost-data
+        persistentVolumeClaim:
+          claimName: mixpost-storage
+---
+# Deployment Queue Worker
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mixpost-queue
+  namespace: mixpost
+  labels:
+    app: mixpost-queue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mixpost-queue
+  template:
+    metadata:
+      labels:
+        app: mixpost-queue
+    spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: applications-pool
+      containers:
+      - name: queue-worker
+        image: inovector/mixpost:latest
+        command: ["php", "artisan", "queue:work", "--verbose", "--tries=3", "--timeout=90"]
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        envFrom:
+        - configMapRef:
+            name: mixpost-config
+        - secretRef:
+            name: mixpost-secrets
+        volumeMounts:
+        - name: mixpost-data
+          mountPath: /var/www/html/storage
+      volumes:
+      - name: mixpost-data
+        persistentVolumeClaim:
+          claimName: mixpost-storage
+---
+# Service pour Mixpost
+apiVersion: v1
+kind: Service
+metadata:
+  name: mixpost-service
+  namespace: mixpost
+  labels:
+    app: mixpost
+spec:
+  selector:
+    app: mixpost
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  type: ClusterIP
+---
+# Ingress pour Mixpost
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mixpost-ingress
+  namespace: mixpost
+  labels:
+    app: mixpost
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - mixpost.blueocean.local
+    secretName: mixpost-tls
+  rules:
+  - host: mixpost.blueocean.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mixpost-service
+            port:
+              number: 80

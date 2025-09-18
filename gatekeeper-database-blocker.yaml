@@ -1,0 +1,81 @@
+---
+# ConstraintTemplate pour bloquer bases de données
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: blockdatabasecreation
+spec:
+  crd:
+    spec:
+      names:
+        kind: BlockDatabaseCreation
+      validation:
+        type: object
+        properties:
+          allowedNamespaces:
+            type: array
+            items:
+              type: string
+          blockedImages:
+            type: array
+            items:
+              type: string
+          message:
+            type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package blockdatabasecreation
+        
+        violation[{"msg": msg}] {
+          input.review.kind.kind == "Deployment"
+          input.review.object.spec.template.spec.containers[_].image
+          container := input.review.object.spec.template.spec.containers[_]
+          blocked_image := input.parameters.blockedImages[_]
+          contains(container.image, blocked_image)
+          not namespace_allowed
+          msg := sprintf("❌ VIOLATION CONSIGNE LUDOVIC: Création %s interdite dans namespace %s. Utiliser postgres-central.platform.svc.cluster.local", [blocked_image, input.review.namespace])
+        }
+        
+        violation[{"msg": msg}] {
+          input.review.kind.kind == "StatefulSet"
+          input.review.object.spec.template.spec.containers[_].image
+          container := input.review.object.spec.template.spec.containers[_]
+          blocked_image := input.parameters.blockedImages[_]
+          contains(container.image, blocked_image)
+          not namespace_allowed
+          msg := sprintf("❌ VIOLATION CONSIGNE LUDOVIC: StatefulSet %s interdit dans namespace %s. Utiliser services centraux platform", [blocked_image, input.review.namespace])
+        }
+        
+        namespace_allowed {
+          allowed := input.parameters.allowedNamespaces[_]
+          input.review.namespace == allowed
+        }
+---
+# Constraint qui applique la policy
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: BlockDatabaseCreation
+metadata:
+  name: block-all-databases-except-platform
+spec:
+  match:
+    kinds:
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet"]
+    excludedNamespaces: ["kube-system", "gatekeeper-system"]
+  parameters:
+    allowedNamespaces: 
+      - "platform"
+      - "shared-infra"
+      - "dev-staging-db"  # Exception environnement de dev
+    blockedImages:
+      - "postgres"
+      - "postgresql"
+      - "mysql"
+      - "mariadb" 
+      - "redis"
+      - "mongodb"
+      - "mongo"
+      - "cassandra"
+      - "influxdb"
+    message: "Création base de données bloquée par consigne Ludovic"

@@ -1,0 +1,129 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nexia-directus-config
+  namespace: nexia-dev
+data:
+  NODE_ENV: "development"
+  PORT: "7012"
+  HOST: "0.0.0.0"
+  PUBLIC_URL: "https://nexia-dev.onlyoneapi.com/directus"
+  DB_CLIENT: "pg"
+  DB_HOST: "postgres-central.platform.svc.cluster.local"
+  DB_PORT: "5432"
+  DB_DATABASE: "nexia_directus_dev"
+  DB_USER: "nexia_user"
+  ADMIN_EMAIL: "admin@nexia.com"
+  CORS_ENABLED: "true"
+  CORS_ORIGIN: "https://nexia-dev.onlyoneapi.com"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nexia-directus-secrets
+  namespace: nexia-dev
+type: Opaque
+data:
+  DB_PASSWORD: bmV4aWFfcGFzc3dvcmQyMDI1IQ==  # nexia_password2025!
+  KEY: bmV4aWFfZGlyZWN0dXNfa2V5XzIwMjVfZGV2  # nexia_directus_key_2025_dev
+  SECRET: bmV4aWFfZGlyZWN0dXNfc2VjcmV0XzIwMjVfZGV2  # nexia_directus_secret_2025_dev
+  ADMIN_PASSWORD: TmV4aWFBZG1pbjIwMjUh  # NexiaAdmin2025!
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexia-directus-deployment
+  namespace: nexia-dev
+  labels:
+    app: nexia-directus
+    environment: dev
+    component: cms-intelligence
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nexia-directus
+  template:
+    metadata:
+      labels:
+        app: nexia-directus
+        environment: dev
+        component: cms-intelligence
+    spec:
+      containers:
+      - name: nexia-directus
+        image: directus/directus:latest
+        ports:
+        - containerPort: 7012
+          name: http
+        envFrom:
+        - configMapRef:
+            name: nexia-directus-config
+        - secretRef:
+            name: nexia-directus-secrets
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "300m"
+        livenessProbe:
+          httpGet:
+            path: /server/health
+            port: 7012
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /server/health
+            port: 7012
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        volumeMounts:
+        - name: directus-uploads
+          mountPath: /directus/uploads
+      tolerations:
+      - key: "dedicated"
+        operator: "Equal"
+        value: "saas"
+        effect: "NoSchedule"
+      volumes:
+      - name: directus-uploads
+        persistentVolumeClaim:
+          claimName: nexia-directus-uploads-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexia-directus-service
+  namespace: nexia-dev
+  labels:
+    app: nexia-directus
+    environment: dev
+spec:
+  type: ClusterIP
+  ports:
+  - port: 7012
+    targetPort: 7012
+    protocol: TCP
+    name: http
+  selector:
+    app: nexia-directus
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nexia-directus-uploads-pvc
+  namespace: nexia-dev
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: do-block-storage

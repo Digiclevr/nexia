@@ -2,6 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
 import path from 'path';
 
+// Intelligence result type
+interface IntelligenceResult {
+  success: boolean;
+  oger_status: string;
+  data: {
+    actionItemsCreated: number;
+    actionItems: any[];
+    processingStats: {
+      contentLength: number;
+      processingTime: number;
+      categories: string[];
+      priorityDistribution: Record<string, number>;
+    };
+  };
+}
+
 // Mock data for testing when Directus is not available
 const mockActionItems = [
   {
@@ -42,7 +58,7 @@ export async function POST(request: NextRequest) {
     const { content, source, metadata } = await request.json();
     
     // Try to process with local intelligence service first
-    let intelligenceResult;
+    let intelligenceResult: IntelligenceResult;
     
     try {
       // Call local Node.js intelligence service
@@ -89,7 +105,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Local intelligence processing function
-async function processWithLocalIntelligence(content: string, source: string) {
+async function processWithLocalIntelligence(content: string, source: string): Promise<IntelligenceResult> {
   return new Promise((resolve, reject) => {
     const servicePath = path.join(process.cwd(), '../nexia-directus/intelligence-service.js');
     

@@ -3,7 +3,7 @@ export const nexiaApi = {
   // Base configuration
   baseUrl: process.env.NODE_ENV === 'production' 
     ? 'https://nexia.onlyoneapi.com/api'
-    : 'http://localhost:7014/api',
+    : 'http://localhost:7010/api',
 
   // Fetch NEXIA status
   async fetchStatus() {
@@ -198,6 +198,34 @@ export const nexiaApi = {
     }
   },
 
+  // Fetch system ports
+  async fetchSystemPorts() {
+    try {
+      const response = await fetch(`${this.baseUrl}/system/ports`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`System ports API error: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('NEXIA System Ports API Error:', error);
+      // Return mock data for development
+      return { 
+        data: {
+          active_ports: [7010, 7011, 7012, 7013, 9080, 9081, 9082, 9083, 8001],
+          conflicts: [],
+          status: 'healthy'
+        }
+      };
+    }
+  },
+
   // Health check
   async healthCheck() {
     try {
@@ -225,6 +253,7 @@ export const getStatusQueryKey = () => ['nexia-status'];
 export const getEcosystemHealthQueryKey = () => ['ecosystem-health'];
 export const getActiveAlertsQueryKey = () => ['active-alerts'];
 export const getMetricsQueryKey = () => ['nexia-metrics'];
+export const getSystemPortsQueryKey = () => ['system-ports'];
 export const getDirectusContentQueryKey = (collection: string) => ['directus', collection];
 
 export default nexiaApi;

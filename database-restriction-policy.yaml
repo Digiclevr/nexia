@@ -1,0 +1,74 @@
+---
+# ValidatingAdmissionWebhook - Blocage natif Kubernetes
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionWebhook
+metadata:
+  name: block-database-creation
+webhooks:
+- name: block-postgres-mysql-redis.blueocean.local
+  clientConfig:
+    service:
+      name: database-blocker-service
+      namespace: security-2025
+      path: "/validate"
+  rules:
+  - operations: [ "CREATE", "UPDATE" ]
+    apiGroups: ["apps"]
+    apiVersions: ["v1"]
+    resources: ["deployments", "statefulsets"]
+  - operations: [ "CREATE", "UPDATE" ]
+    apiGroups: [""]
+    apiVersions: ["v1"]
+    resources: ["pods"]
+  failurePolicy: Fail
+  admissionReviewVersions: ["v1", "v1beta1"]
+---
+# Service du webhook
+apiVersion: v1
+kind: Service
+metadata:
+  name: database-blocker-service
+  namespace: security-2025
+spec:
+  selector:
+    app: database-blocker
+  ports:
+  - port: 443
+    targetPort: 8443
+---
+# Deployment du webhook blocker
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database-blocker
+  namespace: security-2025
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: database-blocker
+  template:
+    metadata:
+      labels:
+        app: database-blocker
+    spec:
+      containers:
+      - name: blocker
+        image: nginx:alpine
+        ports:
+        - containerPort: 8443
+        env:
+        - name: BLOCKED_IMAGES
+          value: "postgres,mysql,redis,mongodb,mariadb"
+        - name: ALLOWED_NAMESPACES
+          value: "platform,shared-infra"
+        - name: SLACK_WEBHOOK
+          value: "https://hooks.slack.com/YOUR_WEBHOOK"
+        volumeMounts:
+        - name: webhook-certs
+          mountPath: /etc/webhook/certs
+          readOnly: true
+      volumes:
+      - name: webhook-certs
+        secret:
+          secretName: webhook-certs

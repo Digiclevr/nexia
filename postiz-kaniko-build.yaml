@@ -1,0 +1,100 @@
+---
+# Pipeline Kaniko pour builder Postiz avec backup sur DigitalOcean Registry
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postiz-kaniko-build
+  namespace: platform
+  labels:
+    app: postiz-build
+    component: kaniko
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        doks.digitalocean.com/node-pool: applications-pool
+      containers:
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:latest
+        args:
+        - --dockerfile=Dockerfile
+        - --context=git://github.com/gitroomhq/postiz-app.git
+        - --destination=registry.digitalocean.com/onlyoneapi/postiz-app:latest
+        - --destination=registry.digitalocean.com/onlyoneapi/postiz-app:v$(date +%Y%m%d-%H%M%S)
+        - --destination=registry.digitalocean.com/onlyoneapi/postiz-app-backup:$(date +%Y%m%d)
+        - --cache=true
+        - --cache-repo=registry.digitalocean.com/onlyoneapi/postiz-cache
+        - --compressed-caching=false
+        - --single-snapshot
+        volumeMounts:
+        - name: docker-config
+          mountPath: /kaniko/.docker/
+          readOnly: true
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+      volumes:
+      - name: docker-config
+        secret:
+          secretName: digitalocean-registry-secret
+          items:
+          - key: .dockerconfigjson
+            path: config.json
+---
+# Script de déploiement avec image custom
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postiz-deploy-script
+  namespace: platform
+data:
+  deploy.sh: |
+    #!/bin/bash
+    
+    # Attendre que l'image soit prête
+    echo "⏳ Vérification image Postiz sur DO Registry..."
+    until kubectl run image-check --rm -i --restart=Never \
+      --image=registry.digitalocean.com/onlyoneapi/postiz-app:latest \
+      --command -- echo "Image disponible"; do
+      echo "⏳ Attente image... (retry dans 30s)"
+      sleep 30
+    done
+    
+    echo "✅ Image Postiz prête sur DO Registry"
+    
+    # Déployer avec image custom
+    helm install postiz \
+      oci://ghcr.io/gitroomhq/postiz-helmchart/charts/postiz-app \
+      --namespace postiz \
+      --create-namespace \
+      --set image.repository="registry.digitalocean.com/onlyoneapi/postiz-app" \
+      --set image.tag="latest" \
+      --set postgresql.enabled=false \
+      --set redis.enabled=false \
+      --set env.DATABASE_URL="postgresql://postiz:postiz-password-2025@postgres-central.platform.svc.cluster.local:5432/postiz" \
+      --set env.REDIS_URL="redis://platform-pool-redis-master.platform.svc.cluster.local:6379" \
+      --set ingress.enabled=true \
+      --set ingress.className="nginx" \
+      --set ingress.hosts[0].host="postiz.blueocean.local" \
+      --set ingress.hosts[0].paths[0].path="/" \
+      --set ingress.hosts[0].paths[0].pathType="Prefix" \
+      --set ingress.tls[0].secretName="postiz-tls" \
+      --set ingress.tls[0].hosts[0]="postiz.blueocean.local" \
+      --set ingress.annotations."cert-manager\.io/cluster-issuer"="letsencrypt-prod" \
+      --set ingress.annotations."nginx\.ingress\.kubernetes\.io/ssl-redirect"="true" \
+      --set env.POSTIZ_URL="https://postiz.blueocean.local" \
+      --set env.NODE_ENV="production" \
+      --set nodeSelector."doks\.digitalocean\.com/node-pool"="applications-pool" \
+      --set resources.limits.cpu="500m" \
+      --set resources.limits.memory="512Mi" \
+      --set resources.requests.cpu="250m" \
+      --set resources.requests.memory="256Mi"
+    
+    echo "🚀 Postiz déployé avec image DO Registry"
+    echo "📦 Image: registry.digitalocean.com/onlyoneapi/postiz-app:latest"
+    echo "💾 Backup: registry.digitalocean.com/onlyoneapi/postiz-app-backup:$(date +%Y%m%d)"

@@ -1,0 +1,25 @@
+---
+# Ingress pour test Mixpost minimal
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mixpost-minimal-ingress
+  namespace: mixpost
+  labels:
+    app: mixpost-minimal
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: mixpost-test.blueocean.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mixpost-minimal-service
+            port:
+              number: 80

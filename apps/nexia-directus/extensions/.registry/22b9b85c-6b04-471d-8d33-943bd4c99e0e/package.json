@@ -1,0 +1,46 @@
+{
+  "name": "@veribir/m2a-interface",
+  "type": "module",
+  "version": "0.0.4",
+  "description": "This Directus extension transforms the standard Many-to-Any (M2A) Builder dropdown into an intuitive visual modal with card-based collection selection. Users can quickly filter collections using category and tag chips, search by name, and navigate with keyboard shortcuts. The responsive grid layout displays collection icons and banners, making it easy to find the right content type in large Directus projects with many available collections.",
+  "author": "Veribir",
+  "license": "Proprietary",
+  "keywords": [
+    "Blocks",
+    "M2A",
+    "Builder",
+    "directus",
+    "directus-extension",
+    "directus-extension-interface",
+    "modal",
+    "collection-selector",
+    "visual-grid"
+  ],
+  "icon": "grid_view",
+  "files": [
+    "dist",
+    "README.md",
+    "package.json",
+    "LICENSE"
+  ],
+  "directus:extension": {
+    "type": "interface",
+    "path": "dist/index.js",
+    "source": "src/index.ts",
+    "host": "^11.8.0"
+  },
+  "scripts": {
+    "build": "directus-extension build",
+    "dev": "directus-extension build -w --no-minify",
+    "link": "directus-extension link",
+    "validate": "directus-extension validate"
+  },
+  "dependencies": {
+    "@vueuse/core": "^13.1.0"
+  },
+  "devDependencies": {
+    "@directus/extensions-sdk": "13.0.4",
+    "typescript": "^5.8.3",
+    "vue": "3.5.13"
+  }
+}

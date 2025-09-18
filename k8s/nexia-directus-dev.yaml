@@ -1,0 +1,156 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nexia-directus-config
+  namespace: nexia-dev
+data:
+  NODE_ENV: "development"
+  PORT: "7012"
+  HOST: "0.0.0.0"
+  PUBLIC_URL: "https://nexia-dev.onlyoneapi.com/directus"
+  DB_CLIENT: "pg"
+  DB_HOST: "postgres-central.platform.svc.cluster.local"
+  DB_PORT: "5432"
+  DB_DATABASE: "nexia_directus_dev"
+  DB_USER: "nexia_user"
+  REDIS_HOST: "platform-pool-redis-master.platform.svc.cluster.local"
+  REDIS_PORT: "6379"
+  ADMIN_EMAIL: "admin@nexia.com"
+  CORS_ENABLED: "true"
+  CORS_ORIGIN: "https://nexia-dev.onlyoneapi.com"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nexia-directus-secrets
+  namespace: nexia-dev
+type: Opaque
+data:
+  DB_PASSWORD: bmV4aWFfcGFzc3dvcmQyMDI1IQ==  # nexia_password2025!
+  KEY: bmV4aWFfZGlyZWN0dXNfa2V5XzIwMjVfZGV2  # nexia_directus_key_2025_dev
+  SECRET: bmV4aWFfZGlyZWN0dXNfc2VjcmV0XzIwMjVfZGV2  # nexia_directus_secret_2025_dev
+  ADMIN_PASSWORD: TmV4aWFBZG1pbjIwMjUh  # NexiaAdmin2025!
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexia-directus-deployment
+  namespace: nexia-dev
+  labels:
+    app: nexia-directus
+    environment: dev
+    component: cms-intelligence
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nexia-directus
+  template:
+    metadata:
+      labels:
+        app: nexia-directus
+        environment: dev
+        component: cms-intelligence
+    spec:
+      containers:
+      - name: nexia-directus
+        image: registry.digitalocean.com/nexia/nexia-directus:dev-latest
+        ports:
+        - containerPort: 7012
+          name: http
+        envFrom:
+        - configMapRef:
+            name: nexia-directus-config
+        - secretRef:
+            name: nexia-directus-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "300m"
+          limits:
+            memory: "1Gi"
+            cpu: "800m"
+        livenessProbe:
+          httpGet:
+            path: /server/health
+            port: 7012
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /server/health
+            port: 7012
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        volumeMounts:
+        - name: directus-uploads
+          mountPath: /directus/uploads
+      volumes:
+      - name: directus-uploads
+        persistentVolumeClaim:
+          claimName: nexia-directus-uploads-pvc
+      imagePullSecrets:
+      - name: docr-secret
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexia-directus-service
+  namespace: nexia-dev
+  labels:
+    app: nexia-directus
+    environment: dev
+spec:
+  type: ClusterIP
+  ports:
+  - port: 7012
+    targetPort: 7012
+    protocol: TCP
+    name: http
+  selector:
+    app: nexia-directus
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nexia-directus-uploads-pvc
+  namespace: nexia-dev
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: do-block-storage
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nexia-directus-ingress
+  namespace: nexia-dev
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  tls:
+  - hosts:
+    - nexia-dev.onlyoneapi.com
+    secretName: nexia-dev-tls
+  rules:
+  - host: nexia-dev.onlyoneapi.com
+    http:
+      paths:
+      - path: /directus(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: nexia-directus-service
+            port:
+              number: 7012

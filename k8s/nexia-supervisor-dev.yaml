@@ -1,0 +1,112 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nexia-supervisor-config
+  namespace: nexia-dev
+data:
+  NODE_ENV: "development"
+  NEXT_PUBLIC_ENV: "development"
+  DIRECTUS_URL: "http://nexia-directus-service.nexia-dev.svc.cluster.local:7012"
+  CLUSTER_NAME: "blueocean-dev"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexia-supervisor-deployment
+  namespace: nexia-dev
+  labels:
+    app: nexia-supervisor
+    environment: dev
+    component: intelligence-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nexia-supervisor
+  template:
+    metadata:
+      labels:
+        app: nexia-supervisor
+        environment: dev
+        component: intelligence-dashboard
+    spec:
+      containers:
+      - name: nexia-supervisor
+        image: registry.digitalocean.com/nexia/nexia-supervisor:dev-latest
+        ports:
+        - containerPort: 7010
+          name: http
+        env:
+        - name: PORT
+          value: "7010"
+        envFrom:
+        - configMapRef:
+            name: nexia-supervisor-config
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 7010
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 7010
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      imagePullSecrets:
+      - name: docr-secret
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexia-supervisor-service
+  namespace: nexia-dev
+  labels:
+    app: nexia-supervisor
+    environment: dev
+spec:
+  type: ClusterIP
+  ports:
+  - port: 7010
+    targetPort: 7010
+    protocol: TCP
+    name: http
+  selector:
+    app: nexia-supervisor
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nexia-supervisor-ingress
+  namespace: nexia-dev
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+  - hosts:
+    - nexia-dev.onlyoneapi.com
+    secretName: nexia-dev-tls
+  rules:
+  - host: nexia-dev.onlyoneapi.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nexia-supervisor-service
+            port:
+              number: 7010

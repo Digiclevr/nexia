@@ -1,0 +1,186 @@
+---
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: blockpostgresqlcreation
+  annotations:
+    description: "CONSIGNE LUDOVIC: Interdit création PostgreSQL/MySQL. Seul postgres-central.platform autorisé"
+spec:
+  crd:
+    spec:
+      names:
+        kind: BlockPostgreSQLCreation
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            allowedNamespaces:
+              description: "Namespaces autorisés pour PostgreSQL"
+              items:
+                type: string
+              type: array
+            allowedServices:
+              description: "Services base données autorisés explicitement" 
+              items:
+                type: string
+              type: array
+          type: object
+  targets:
+  - target: admission.k8s.gatekeeper.sh
+    rego: |
+      package blockpostgresqlcreation
+
+      # Violation Deployment PostgreSQL/MySQL
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "Deployment"
+        is_database_deployment
+        not is_allowed_database
+        msg := sprintf("❌ VIOLATION CONSIGNE LUDOVIC: Création '%s' interdite dans '%s'. Utiliser postgres-central.platform.svc.cluster.local:5432", [input.review.object.metadata.name, input.review.object.metadata.namespace])
+      }
+
+      # Violation StatefulSet PostgreSQL/MySQL
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "StatefulSet"
+        is_database_deployment  
+        not is_allowed_database
+        msg := sprintf("❌ VIOLATION CONSIGNE LUDOVIC: StatefulSet '%s' interdit dans '%s'. Utiliser services centraux platform", [input.review.object.metadata.name, input.review.object.metadata.namespace])
+      }
+
+      # Violation Service base de données
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "Service"
+        is_database_service
+        not is_allowed_database_service
+        not is_external_name_to_platform
+        msg := sprintf("❌ VIOLATION CONSIGNE LUDOVIC: Service '%s' interdit dans '%s'. Utiliser ExternalName vers postgres-central.platform.svc.cluster.local", [input.review.object.metadata.name, input.review.object.metadata.namespace])
+      }
+
+      # Détection déploiement base de données
+      is_database_deployment {
+        # Nom contenant postgres/mysql
+        db_name := lower(input.review.object.metadata.name)
+        contains(db_name, "postgres")
+      }
+
+      is_database_deployment {
+        db_name := lower(input.review.object.metadata.name)
+        contains(db_name, "mysql")
+      }
+
+      is_database_deployment {
+        db_name := lower(input.review.object.metadata.name)
+        contains(db_name, "mariadb")
+      }
+
+      is_database_deployment {
+        # Image contenant postgres/mysql
+        some i
+        db_image := lower(input.review.object.spec.template.spec.containers[i].image)
+        contains(db_image, "postgres")
+      }
+
+      is_database_deployment {
+        some i
+        db_image := lower(input.review.object.spec.template.spec.containers[i].image)
+        contains(db_image, "mysql")
+      }
+
+      is_database_deployment {
+        some i
+        db_image := lower(input.review.object.spec.template.spec.containers[i].image)
+        contains(db_image, "mariadb")
+      }
+
+      is_database_deployment {
+        # Port 5432 (PostgreSQL) ou 3306 (MySQL)
+        some i, j
+        port := input.review.object.spec.template.spec.containers[i].ports[j].containerPort
+        port == 5432
+      }
+
+      is_database_deployment {
+        some i, j
+        port := input.review.object.spec.template.spec.containers[i].ports[j].containerPort
+        port == 3306
+      }
+
+      # Détection service base de données
+      is_database_service {
+        db_name := lower(input.review.object.metadata.name)
+        contains(db_name, "postgres")
+      }
+
+      is_database_service {
+        db_name := lower(input.review.object.metadata.name)
+        contains(db_name, "mysql")
+      }
+
+      is_database_service {
+        some i
+        port := input.review.object.spec.ports[i].port
+        port == 5432
+      }
+
+      is_database_service {
+        some i
+        port := input.review.object.spec.ports[i].port
+        port == 3306
+      }
+
+      # Autorisations
+      is_allowed_database {
+        # Namespace autorisé
+        some i
+        input.parameters.allowedNamespaces[i] == input.review.object.metadata.namespace
+      }
+
+      is_allowed_database {
+        # Service explicitement autorisé
+        some i
+        service_name := sprintf("%s/%s", [input.review.object.metadata.namespace, input.review.object.metadata.name])
+        input.parameters.allowedServices[i] == service_name
+      }
+
+      is_allowed_database_service {
+        # Platform namespace toujours autorisé
+        input.review.object.metadata.namespace == "platform"
+        regex.match(".*postgres.*central.*", input.review.object.metadata.name)
+      }
+
+      is_allowed_database_service {
+        some i
+        service_name := sprintf("%s/%s", [input.review.object.metadata.namespace, input.review.object.metadata.name])
+        input.parameters.allowedServices[i] == service_name
+      }
+
+      # ExternalName vers platform autorisé
+      is_external_name_to_platform {
+        input.review.object.spec.type == "ExternalName"
+        contains(input.review.object.spec.externalName, "platform")
+        contains(input.review.object.spec.externalName, "postgres")
+      }
+---
+# Application de la constraint
+apiVersion: constraints.gatekeeper.sh/v1beta1  
+kind: BlockPostgreSQLCreation
+metadata:
+  name: ludovic-database-restriction
+spec:
+  match:
+    kinds:
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet"]
+      - apiGroups: [""]
+        kinds: ["Service"]
+    excludedNamespaces: 
+      - "kube-system"
+      - "gatekeeper-system"
+  parameters:
+    allowedNamespaces:
+      - "platform"           # PostgreSQL central autorisé
+      - "shared-infra"       # GrowthBook autorisé
+      - "dev-staging-db"     # Environnement dev isolé
+    allowedServices:
+      - "platform/postgres-central"
+      - "shared-infra/postgres-growthbook"
+      - "dev-staging-db/postgres-dev-staging"

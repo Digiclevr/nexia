@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-fixed
+  namespace: kong
+  labels:
+    app: postgres
+    tier: database
+  annotations:
+    upgrade.postgresql/version: "15-alpine"
+    upgrade.postgresql/date: "2025-09-17"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  serviceName: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        project: blueocean
+        tier: database
+        version: "15-alpine"
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_DB
+          value: kong
+        - name: POSTGRES_USER
+          value: kong
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: postgres-secret
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        - name: POSTGRES_INITDB_ARGS
+          value: "--auth-host=md5 --encoding=UTF8 --locale=C"
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: 500m
+            memory: 1Gi
+        # Health checks améliorés pour Kong
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - kong
+            - -d
+            - kong
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - kong
+            - -d
+            - kong
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        startupProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - kong
+            - -d
+            - kong
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 30
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgres-storage
+      nodeSelector:
+        db-role: critical-primary
+        pool: platform-pool
+      tolerations:
+      - effect: NoSchedule
+        key: database
+        value: "true"
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: do-block-storage

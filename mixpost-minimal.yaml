@@ -1,0 +1,49 @@
+---
+# Mixpost ultra-minimal sans init containers
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mixpost-minimal
+  namespace: mixpost
+  labels:
+    app: mixpost-minimal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mixpost-minimal
+  template:
+    metadata:
+      labels:
+        app: mixpost-minimal
+    spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: applications-pool
+      containers:
+      - name: mixpost
+        image: inovector/mixpost:latest
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        env:
+        # Configuration minimale pour test
+        - name: APP_ENV
+          value: "production"
+        - name: APP_DEBUG
+          value: "false"
+        - name: APP_URL
+          value: "https://mixpost.blueocean.local"
+        - name: APP_KEY
+          value: "base64:M1xpost2025BlueOceanSecretKey=="
+        # Base externe pour test initial
+        - name: DB_CONNECTION
+          value: "sqlite"
+        - name: DB_DATABASE
+          value: "/tmp/database.sqlite"
+        # Pas de probes pour debug initial

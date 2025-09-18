@@ -1,0 +1,161 @@
+---
+# Déploiement Postiz simple sans Helm - Infrastructure BlueOcean
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: postiz
+  labels:
+    app: postiz
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postiz-secrets
+  namespace: postiz
+type: Opaque
+stringData:
+  JWT_SECRET: "postiz-jwt-secret-2025-blueocean"
+  ENCRYPTION_KEY: "postiz-encryption-key-2025"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postiz-config
+  namespace: postiz
+data:
+  DATABASE_URL: "postgresql://postgres:postgres123@10.245.190.177:5432/postiz"
+  REDIS_URL: "redis://platform-pool-redis-master.platform.svc.cluster.local:6379"
+  POSTIZ_URL: "https://postiz.blueocean.local"
+  NODE_ENV: "production"
+  PORT: "3000"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postiz
+  namespace: postiz
+  labels:
+    app: postiz
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postiz
+  template:
+    metadata:
+      labels:
+        app: postiz
+    spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: applications-pool
+      containers:
+      - name: postiz
+        image: ghcr.io/gitroomhq/postiz-app:latest
+        ports:
+        - containerPort: 3000
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: postiz-config
+              key: DATABASE_URL
+        - name: REDIS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: postiz-config
+              key: REDIS_URL
+        - name: POSTIZ_URL
+          valueFrom:
+            configMapKeyRef:
+              name: postiz-config
+              key: POSTIZ_URL
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: postiz-secrets
+              key: JWT_SECRET
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: postiz-secrets
+              key: ENCRYPTION_KEY
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: postiz-config
+              key: NODE_ENV
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: postiz-config
+              key: PORT
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 180
+          periodSeconds: 30
+          timeoutSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 300
+          periodSeconds: 60
+          timeoutSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postiz-service
+  namespace: postiz
+  labels:
+    app: postiz
+spec:
+  selector:
+    app: postiz
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: postiz-ingress
+  namespace: postiz
+  labels:
+    app: postiz
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - postiz.blueocean.local
+    secretName: postiz-tls
+  rules:
+  - host: postiz.blueocean.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: postiz-service
+            port:
+              number: 80

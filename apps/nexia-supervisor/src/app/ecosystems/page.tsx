@@ -95,58 +95,11 @@ export default function EcosystemsPage() {
     }
   }
 
-  return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar Navigation - NEXTSTEP Style */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-white border-r border-gray-200">
-        <div className="flex flex-col flex-1 min-h-0">
-          <div className="flex items-center h-16 px-6 bg-nexia-gradient">
-            <Globe className="h-8 w-8 text-white mr-3" />
-            <div>
-              <h1 className="text-lg font-bold text-white">NEXIA</h1>
-              <p className="text-xs text-nexia-100">Meta-Orchestrateur</p>
-            </div>
-          </div>
-          
-          <nav className="flex-1 px-4 py-6 space-y-2">
-            <h3 className="px-2 text-xs font-semibold text-nexia-600 uppercase tracking-wider">Vue d'Ensemble</h3>
-            <a href="/" className="flex items-center px-2 py-2 text-sm font-medium text-nexia-600 hover:text-nexia-primary hover:bg-nexia-50 rounded-md">
-              <Activity className="mr-3 h-4 w-4" />
-              Dashboard Principal
-            </a>
-            
-            <h3 className="px-2 mt-6 text-xs font-semibold text-nexia-600 uppercase tracking-wider">Supervision</h3>
-            <a href="/ecosystems" className="flex items-center px-2 py-2 text-sm font-medium text-nexia-primary bg-nexia-50 rounded-md">
-              <Globe className="mr-3 h-4 w-4" />
-              Écosystèmes
-            </a>
-            <a href="/alerts" className="flex items-center px-2 py-2 text-sm font-medium text-nexia-600 hover:text-nexia-primary hover:bg-nexia-50 rounded-md">
-              <AlertTriangle className="mr-3 h-4 w-4" />
-              Alertes & Incidents
-            </a>
-            <a href="/performance" className="flex items-center px-2 py-2 text-sm font-medium text-nexia-600 hover:text-nexia-primary hover:bg-nexia-50 rounded-md">
-              <TrendingUp className="mr-3 h-4 w-4" />
-              Performance
-            </a>
-            
-            <h3 className="px-2 mt-6 text-xs font-semibold text-nexia-600 uppercase tracking-wider">Opérations</h3>
-            <a href="/voice" className="flex items-center px-2 py-2 text-sm font-medium text-nexia-600 hover:text-nexia-primary hover:bg-nexia-50 rounded-md">
-              <Users className="mr-3 h-4 w-4" />
-              Interface Vocale
-            </a>
-          </nav>
-          
-          <div className="flex-shrink-0 px-4 py-4 border-t border-nexia-200">
-            <div className="text-xs text-nexia-500">
-              <p className="font-medium">NEXIA v2.0.0</p>
-              <p>Supervision 24/7 Active</p>
-            </div>
-          </div>
-        </div>
-      </aside>
+  const handleRefreshEcosystems = () => {
+    alert('🔄 Actualisation des écosystèmes - Vérification status: BlueOcean, OnlyOneAPI, Business-Automation, Claude Code')
+  }
 
-      {/* Main Content */}
-      <div className="flex-1 lg:pl-64">
+  return (
         <div className="px-4 sm:px-6 lg:px-8 py-6">
           {/* Header */}
           <header className="bg-white shadow-sm border-b border-gray-200 mb-6">
@@ -163,7 +116,10 @@ export default function EcosystemsPage() {
                   <p className="text-xs text-nexia-500">Paris • Temps Réel</p>
                   <p className="text-sm font-medium text-nexia-dark">{currentTime}</p>
                 </div>
-                <button className="flex items-center px-3 py-2 text-sm font-medium text-nexia-600 bg-white border border-nexia-300 rounded-md hover:bg-nexia-50">
+                <button 
+                  onClick={handleRefreshEcosystems}
+                  className="flex items-center px-3 py-2 text-sm font-medium text-nexia-600 bg-white border border-nexia-300 rounded-md hover:bg-nexia-50"
+                >
                   <Activity className="h-4 w-4 mr-2" />
                   Actualiser
                 </button>
@@ -252,9 +208,7 @@ export default function EcosystemsPage() {
                 </div>
               </div>
             ))}
-          </div>
         </div>
-      </div>
     </div>
   )
 }

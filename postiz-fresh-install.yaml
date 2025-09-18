@@ -1,0 +1,186 @@
+---
+# Namespace dédié pour Postiz
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: postiz
+  labels:
+    app: postiz
+    component: social-media-management
+---
+# PVC optimisé pour Postiz (5Gi au lieu de 20Gi)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postiz-storage
+  namespace: postiz
+  labels:
+    app: postiz
+    component: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: do-block-storage
+  resources:
+    requests:
+      storage: 5Gi
+---
+# ConfigMap pour configuration Postiz
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postiz-config
+  namespace: postiz
+data:
+  DATABASE_URL: "postgresql://postiz:postiz-password-2025@postgres-central.platform.svc.cluster.local:5432/postiz"
+  REDIS_URL: "redis://platform-pool-redis-master.platform.svc.cluster.local:6379"
+  POSTIZ_URL: "https://postiz.blueocean.local"
+  NODE_ENV: "production"
+  PORT: "3000"
+---
+# Secret pour Postiz
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postiz-secrets
+  namespace: postiz
+type: Opaque
+stringData:
+  JWT_SECRET: "postiz-jwt-secret-2025-blueocean"
+  DATABASE_PASSWORD: "postiz-password-2025"
+  ENCRYPTION_KEY: "postiz-encryption-key-2025"
+---
+# Deployment Postiz
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postiz
+  namespace: postiz
+  labels:
+    app: postiz
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postiz
+  template:
+    metadata:
+      labels:
+        app: postiz
+    spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: applications-pool
+      containers:
+      - name: postiz
+        image: ghcr.io/gitroomhq/postiz-app:latest
+        ports:
+        - containerPort: 3000
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: postiz-config
+              key: DATABASE_URL
+        - name: REDIS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: postiz-config
+              key: REDIS_URL
+        - name: POSTIZ_URL
+          valueFrom:
+            configMapKeyRef:
+              name: postiz-config
+              key: POSTIZ_URL
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: postiz-secrets
+              key: JWT_SECRET
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: postiz-config
+              key: NODE_ENV
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: postiz-config
+              key: PORT
+        volumeMounts:
+        - name: postiz-data
+          mountPath: /app/uploads
+        - name: postiz-config-volume
+          mountPath: /app/config
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+      volumes:
+      - name: postiz-data
+        persistentVolumeClaim:
+          claimName: postiz-storage
+      - name: postiz-config-volume
+        emptyDir: {}
+---
+# Service pour Postiz
+apiVersion: v1
+kind: Service
+metadata:
+  name: postiz-service
+  namespace: postiz
+  labels:
+    app: postiz
+spec:
+  selector:
+    app: postiz
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000
+    protocol: TCP
+  type: ClusterIP
+---
+# Ingress pour Postiz
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: postiz-ingress
+  namespace: postiz
+  labels:
+    app: postiz
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - postiz.blueocean.local
+    secretName: postiz-tls
+  rules:
+  - host: postiz.blueocean.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: postiz-service
+            port:
+              number: 80

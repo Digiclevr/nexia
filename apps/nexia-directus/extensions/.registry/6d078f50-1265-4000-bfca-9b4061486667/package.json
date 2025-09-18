@@ -1,0 +1,87 @@
+{
+  "name": "@devix-tecnologia/directus-extension-inframe",
+  "description": "Extensão para módulo de visualização de conteúdo em iframes",
+  "icon": "extension",
+  "private": false,
+  "version": "2.0.4",
+  "keywords": [
+    "directus",
+    "directus-extension",
+    "directus-module",
+    "iframe",
+    "embed",
+    "visualization",
+    "cms",
+    "admin-panel"
+  ],
+  "type": "module",
+  "files": [
+    "dist/**/*",
+    "package.json",
+    "README.md"
+  ],
+  "directus:extension": {
+    "type": "module",
+    "path": "dist/index.js",
+    "source": "src/index.ts",
+    "host": "^10.10.0"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devix-tecnologia/directus-extension-inframe.git"
+  },
+  "devDependencies": {
+    "@directus/extensions-sdk": "^16.0.1",
+    "@eslint/js": "9.35.0",
+    "eslint": "9.35.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-vue": "10.4.0",
+    "globals": "^16.4.0",
+    "prettier": "3.6.2",
+    "rollup": "^4.50.1",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "8.43.0",
+    "vue": "^3.5.21",
+    "vue-eslint-parser": "^10.2.0"
+  },
+  "dependencies": {
+    "vue-router": "^4.5.1"
+  },
+  "engines": {
+    "node": "22",
+    "pnpm": "10.15.0"
+  },
+  "author": "Devix Tecnologia",
+  "contributors": [
+    {
+      "name": "Sidarta Veloso",
+      "github": "https://github.com/sidartaveloso",
+      "linkedin": "https://www.linkedin.com/in/sidartaveloso"
+    },
+    {
+      "name": "Fernando Gatti",
+      "github": "https://github.com/gattifernando",
+      "linkedin": "https://www.linkedin.com/in/gattifernando/"
+    }
+  ],
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/devix-tecnologia/directus-extension-inframe/issues"
+  },
+  "homepage": "https://github.com/devix-tecnologia/directus-extension-inframe#readme",
+  "scripts": {
+    "build": "directus-extension build",
+    "dev": "directus-extension build -w --no-minify",
+    "link": "directus-extension link",
+    "validate": "directus-extension validate",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint . --ext .ts,.vue",
+    "lint:fix": "eslint . --ext .ts,.vue --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  }
+}

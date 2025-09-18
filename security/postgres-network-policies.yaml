@@ -1,0 +1,245 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-central-access
+  namespace: platform
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres-central
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Autoriser l'accès depuis les namespaces autorisés
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: onlyoneapi
+    - namespaceSelector:
+        matchLabels:
+          name: nextstep-data
+    - namespaceSelector:
+        matchLabels:
+          name: kvibe
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    - namespaceSelector:
+        matchLabels:
+          name: platform
+    ports:
+    - protocol: TCP
+      port: 5432
+  egress:
+  # Autoriser DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # Autoriser les connexions sortantes pour la réplication (si nécessaire)
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: platform
+    ports:
+    - protocol: TCP
+      port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-kong-access
+  namespace: kong
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Autoriser uniquement Kong et monitoring
+  - from:
+    - podSelector:
+        matchLabels:
+          app: kong
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    - namespaceSelector:
+        matchLabels:
+          name: platform  # Pour les backups
+    ports:
+    - protocol: TCP
+      port: 5432
+  egress:
+  # Autoriser DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-dev-staging-restricted
+  namespace: dev-staging-db
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres-dev-staging
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Autoriser l'accès interne uniquement
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: dev
+    - namespaceSelector:
+        matchLabels:
+          name: staging
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    - namespaceSelector:
+        matchLabels:
+          name: platform  # Pour les backups
+    ports:
+    - protocol: TCP
+      port: 5432
+  # Bloquer l'accès externe via NodePort (sera géré par des règles de firewall)
+  egress:
+  # Autoriser DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-dev-staging-internal
+  namespace: dev-staging-db
+  annotations:
+    service.beta.kubernetes.io/do-loadbalancer-enable-proxy-protocol: "true"
+    service.beta.kubernetes.io/do-loadbalancer-protocol: "tcp"
+spec:
+  type: LoadBalancer
+  selector:
+    app: postgres-dev-staging
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+  # Restriction d'accès par IP source (à adapter selon vos besoins)
+  loadBalancerSourceRanges:
+  - "10.0.0.0/8"      # Réseau interne
+  - "192.168.0.0/16"  # Réseau privé
+  # Ajouter ici les IPs publiques autorisées pour l'accès dev
+  # - "YOUR_OFFICE_IP/32"
+---
+# Remplacer les NodePorts par un LoadBalancer avec restrictions
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-dev-external-secure
+  namespace: dev-staging-db
+  annotations:
+    service.beta.kubernetes.io/do-loadbalancer-enable-proxy-protocol: "true"
+    service.beta.kubernetes.io/do-loadbalancer-protocol: "tcp"
+    nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,192.168.0.0/16"
+spec:
+  type: LoadBalancer
+  selector:
+    app: postgres-dev-staging
+  ports:
+  - name: postgres-dev
+    port: 5432
+    targetPort: 5432
+    protocol: TCP
+  loadBalancerSourceRanges:
+  - "10.0.0.0/8"      # Réseau interne
+  - "192.168.0.0/16"  # Réseau privé
+  # Ajouter les IPs autorisées ici
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-security-config
+  namespace: platform
+data:
+  postgresql.conf: |
+    # Configuration de sécurité PostgreSQL
+    
+    # Authentification et sécurité
+    ssl = on
+    ssl_cert_file = '/etc/ssl/certs/server.crt'
+    ssl_key_file = '/etc/ssl/private/server.key'
+    ssl_ca_file = '/etc/ssl/certs/ca.crt'
+    ssl_prefer_server_ciphers = on
+    ssl_ciphers = 'ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384'
+    
+    # Logging et audit
+    log_destination = 'stderr'
+    logging_collector = on
+    log_directory = '/var/log/postgresql'
+    log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+    log_rotation_age = 1d
+    log_rotation_size = 100MB
+    log_min_messages = warning
+    log_min_error_statement = error
+    log_min_duration_statement = 1000  # Log queries > 1s
+    
+    # Log des connexions
+    log_connections = on
+    log_disconnections = on
+    log_checkpoints = on
+    log_lock_waits = on
+    log_temp_files = 0
+    
+    # Sécurité des connexions
+    listen_addresses = '*'
+    port = 5432
+    max_connections = 200
+    superuser_reserved_connections = 3
+    
+    # Timeouts de sécurité
+    statement_timeout = 300000  # 5 minutes
+    lock_timeout = 30000        # 30 secondes
+    idle_in_transaction_session_timeout = 600000  # 10 minutes
+    
+    # Checkpoints et performance
+    checkpoint_completion_target = 0.9
+    wal_buffers = 16MB
+    effective_cache_size = 2GB
+    random_page_cost = 1.1
+    
+  pg_hba.conf: |
+    # TYPE  DATABASE        USER            ADDRESS                 METHOD
+    
+    # Local connections
+    local   all             postgres                                peer
+    local   all             all                                     md5
+    
+    # IPv4 local connections
+    host    all             all             127.0.0.1/32            md5
+    host    all             all             10.244.0.0/16           md5  # Pod network
+    host    all             all             10.245.0.0/16           md5  # Service network
+    
+    # Connexions depuis les namespaces autorisés
+    host    kvibe           postgres        10.244.0.0/16           md5
+    host    nextstep        postgres        10.244.0.0/16           md5
+    host    onlyoneapi      postgres        10.244.0.0/16           md5
+    
+    # Rejeter tout le reste
+    host    all             all             0.0.0.0/0               reject
+    host    all             all             ::/0                    reject

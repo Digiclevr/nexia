@@ -1,0 +1,136 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mautic-storage-alerts
+  namespace: monitoring
+  labels:
+    app: prometheus
+    component: alerting-rules
+data:
+  mautic-storage-rules.yml: |
+    groups:
+    - name: mautic-storage-alerts
+      rules:
+      # Mautic Unified Storage Alerts
+      - alert: MauticUnifiedStorageHighUsage
+        expr: |
+          (
+            1 - (
+              kubelet_volume_stats_available_bytes{job="kubelet", metrics_path="/metrics/cadvisor", namespace="unified-tools", persistentvolumeclaim="mautic-unified-pvc"}
+              /
+              kubelet_volume_stats_capacity_bytes{job="kubelet", metrics_path="/metrics/cadvisor", namespace="unified-tools", persistentvolumeclaim="mautic-unified-pvc"}
+            )
+          ) * 100 > 80
+        for: 2m
+        labels:
+          severity: warning
+          service: mautic-unified
+          namespace: unified-tools
+          component: storage
+        annotations:
+          summary: "Mautic Unified storage usage is high"
+          description: |
+            Mautic Unified persistent volume usage is above 80%.
+            Current usage: {{ printf "%.1f" $value }}%
+            PVC: mautic-unified-pvc (20Gi) in namespace unified-tools
+            Available space: {{ with query "kubelet_volume_stats_available_bytes{namespace='unified-tools', persistentvolumeclaim='mautic-unified-pvc'}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+          runbook_url: "https://nexia.blueocean.local/ecosystems/business-automation"
+          
+      - alert: MauticUnifiedStorageCriticalUsage
+        expr: |
+          (
+            1 - (
+              kubelet_volume_stats_available_bytes{job="kubelet", metrics_path="/metrics/cadvisor", namespace="unified-tools", persistentvolumeclaim="mautic-unified-pvc"}
+              /
+              kubelet_volume_stats_capacity_bytes{job="kubelet", metrics_path="/metrics/cadvisor", namespace="unified-tools", persistentvolumeclaim="mautic-unified-pvc"}
+            )
+          ) * 100 > 90
+        for: 1m
+        labels:
+          severity: critical
+          service: mautic-unified
+          namespace: unified-tools
+          component: storage
+        annotations:
+          summary: "Mautic Unified storage usage is critically high"
+          description: |
+            Mautic Unified persistent volume usage is above 90% - URGENT ACTION REQUIRED.
+            Current usage: {{ printf "%.1f" $value }}%
+            PVC: mautic-unified-pvc (20Gi) in namespace unified-tools
+            Available space: {{ with query "kubelet_volume_stats_available_bytes{namespace='unified-tools', persistentvolumeclaim='mautic-unified-pvc'}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+          runbook_url: "https://nexia.blueocean.local/ecosystems/business-automation"
+          
+      # Mautic KVibes Dev Storage Alerts  
+      - alert: MauticKvibesStorageHighUsage
+        expr: |
+          (
+            1 - (
+              kubelet_volume_stats_available_bytes{job="kubelet", metrics_path="/metrics/cadvisor", namespace="kvibes-dev", persistentvolumeclaim="mautic-pvc"}
+              /
+              kubelet_volume_stats_capacity_bytes{job="kubelet", metrics_path="/metrics/cadvisor", namespace="kvibes-dev", persistentvolumeclaim="mautic-pvc"}
+            )
+          ) * 100 > 80
+        for: 2m
+        labels:
+          severity: warning
+          service: mautic-kvibes
+          namespace: kvibes-dev
+          component: storage
+        annotations:
+          summary: "Mautic KVibes storage usage is high"
+          description: |
+            Mautic KVibes persistent volume usage is above 80%.
+            Current usage: {{ printf "%.1f" $value }}%
+            PVC: mautic-pvc (10Gi) in namespace kvibes-dev
+            Available space: {{ with query "kubelet_volume_stats_available_bytes{namespace='kvibes-dev', persistentvolumeclaim='mautic-pvc'}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+          
+      # Mautic Pods Availability
+      - alert: MauticUnifiedPodNotRunning
+        expr: |
+          kube_pod_status_phase{namespace="unified-tools", pod=~"mautic-unified-.*", phase!="Running"} == 1
+        for: 5m
+        labels:
+          severity: critical
+          service: mautic-unified
+          namespace: unified-tools
+          component: availability
+        annotations:
+          summary: "Mautic Unified pod is not running"
+          description: |
+            Mautic Unified pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is not running.
+            Current phase: {{ $labels.phase }}
+            This affects email marketing campaigns.
+          runbook_url: "https://nexia.blueocean.local/ecosystems/business-automation"
+          
+      - alert: MauticKvibesPodNotRunning
+        expr: |
+          kube_pod_status_phase{namespace="kvibes-dev", pod=~"mautic-.*", phase!="Running"} == 1
+        for: 5m
+        labels:
+          severity: warning
+          service: mautic-kvibes
+          namespace: kvibes-dev
+          component: availability
+        annotations:
+          summary: "Mautic KVibes pod is not running"
+          description: |
+            Mautic KVibes pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is not running.
+            Current phase: {{ $labels.phase }}
+            This affects KVibes marketing workflows.
+            
+      # MySQL Mautic Storage
+      - alert: MySQLMauticStorageWarning
+        expr: |
+          mysql_global_status_innodb_data_pending_writes{instance=~"mysql-mautic-service.*"} > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: mysql-mautic
+          namespace: unified-tools
+          component: database
+        annotations:
+          summary: "MySQL Mautic has high pending writes"
+          description: |
+            MySQL Mautic database has {{ $value }} pending writes.
+            This may indicate storage performance issues.
+          runbook_url: "https://nexia.blueocean.local/ecosystems/business-automation"

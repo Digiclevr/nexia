@@ -1,0 +1,170 @@
+---
+# MySQL ultra-léger pour Mixpost
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-simple
+  namespace: mixpost
+  labels:
+    app: mysql-simple
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-simple
+  template:
+    metadata:
+      labels:
+        app: mysql-simple
+    spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: applications-pool
+      containers:
+      - name: mysql
+        image: mysql:5.7
+        ports:
+        - containerPort: 3306
+        resources:
+          limits:
+            cpu: 100m
+            memory: 200Mi
+          requests:
+            cpu: 50m
+            memory: 100Mi
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "simple123"
+        - name: MYSQL_DATABASE
+          value: "mixpost"
+        - name: MYSQL_USER
+          value: "mixpost"
+        - name: MYSQL_PASSWORD
+          value: "simple123"
+        # Configuration MySQL ultra-légère
+        - name: MYSQL_INIT_SQL
+          value: "SET innodb_buffer_pool_size=32M;"
+        volumeMounts:
+        - name: mysql-data
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-data
+        emptyDir: {}
+---
+# Service MySQL simple
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-simple
+  namespace: mixpost
+  labels:
+    app: mysql-simple
+spec:
+  selector:
+    app: mysql-simple
+  ports:
+  - port: 3306
+    targetPort: 3306
+  type: ClusterIP
+---
+# Mixpost avec MySQL simple
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mixpost-final
+  namespace: mixpost
+  labels:
+    app: mixpost-final
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mixpost-final
+  template:
+    metadata:
+      labels:
+        app: mixpost-final
+    spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: applications-pool
+      containers:
+      - name: mixpost
+        image: inovector/mixpost:latest
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        env:
+        # App config simple
+        - name: APP_NAME
+          value: "Mixpost"
+        - name: APP_ENV
+          value: "production"
+        - name: APP_DEBUG
+          value: "false"
+        - name: APP_URL
+          value: "http://mixpost-final-service.mixpost.svc.cluster.local"
+        - name: APP_KEY
+          value: "base64:M1xpost2025BlueOceanSecretKey=="
+        
+        # Database MySQL simple
+        - name: DB_CONNECTION
+          value: "mysql"
+        - name: DB_HOST
+          value: "mysql-simple"
+        - name: DB_PORT
+          value: "3306"
+        - name: DB_DATABASE
+          value: "mixpost"
+        - name: DB_USERNAME
+          value: "mixpost"
+        - name: DB_PASSWORD
+          value: "simple123"
+        
+        # Config ultra-simple
+        - name: CACHE_DRIVER
+          value: "file"
+        - name: SESSION_DRIVER
+          value: "file"
+        - name: QUEUE_CONNECTION
+          value: "sync"
+        - name: MAIL_MAILER
+          value: "log"
+        - name: FILESYSTEM_DISK
+          value: "local"
+        - name: LOG_LEVEL
+          value: "error"
+        
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 120
+          periodSeconds: 30
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 180
+          periodSeconds: 60
+---
+# Service Mixpost final
+apiVersion: v1
+kind: Service
+metadata:
+  name: mixpost-final-service
+  namespace: mixpost
+  labels:
+    app: mixpost-final
+spec:
+  selector:
+    app: mixpost-final
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+  type: ClusterIP

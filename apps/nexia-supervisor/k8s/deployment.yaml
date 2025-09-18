@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nexia-supervisor
-  namespace: nexia
+  namespace: nexia-dev
   labels:
     app: nexia-supervisor
     component: web
@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: nexia-supervisor
-        image: registry.digitalocean.com/blueocean/nexia-supervisor:latest
+        image: registry.digitalocean.com/blueocean/nexia-supervisor:dev-latest
         ports:
         - containerPort: 3000
         env:
@@ -55,7 +55,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: nexia-supervisor
-  namespace: nexia
+  namespace: nexia-dev
   labels:
     app: nexia-supervisor
 spec:

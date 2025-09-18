@@ -1,0 +1,43 @@
+---
+# Postiz ultra-minimal pour diagnostic
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postiz
+  namespace: postiz
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postiz
+  template:
+    metadata:
+      labels:
+        app: postiz
+    spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: applications-pool
+      containers:
+      - name: postiz
+        image: ghcr.io/gitroomhq/postiz-app:latest
+        ports:
+        - containerPort: 3000
+        env:
+        # Minimal config pour test
+        - name: NODE_ENV
+          value: "development"
+        - name: PORT
+          value: "3000"
+        - name: NEXTAUTH_SECRET
+          value: "test-secret"
+        # Pas de DB pour test initial
+        - name: SKIP_DB
+          value: "true"
+        resources:
+          limits:
+            cpu: 200m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        # Pas de probes pour debug

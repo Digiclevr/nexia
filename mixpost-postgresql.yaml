@@ -1,0 +1,114 @@
+---
+# Mixpost avec PostgreSQL central (plus rapide)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mixpost-postgresql
+  namespace: mixpost
+  labels:
+    app: mixpost-postgresql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mixpost-postgresql
+  template:
+    metadata:
+      labels:
+        app: mixpost-postgresql
+    spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: applications-pool
+      containers:
+      - name: mixpost
+        image: inovector/mixpost:latest
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        env:
+        # App config
+        - name: APP_NAME
+          value: "Mixpost BlueOcean"
+        - name: APP_ENV
+          value: "production"
+        - name: APP_DEBUG
+          value: "false"
+        - name: APP_URL
+          value: "http://mixpost-postgresql-service.mixpost.svc.cluster.local"
+        - name: APP_KEY
+          value: "base64:M1xpost2025BlueOceanSecretKeyVeryLongForSecurity=="
+        
+        # Database PostgreSQL central
+        - name: DB_CONNECTION
+          value: "pgsql"
+        - name: DB_HOST
+          value: "postgres-central.platform.svc.cluster.local"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_DATABASE
+          value: "mixpost"
+        - name: DB_USERNAME
+          value: "postgres"
+        - name: DB_PASSWORD
+          value: "postgres123"
+        
+        # Cache et session
+        - name: CACHE_DRIVER
+          value: "file"
+        - name: SESSION_DRIVER
+          value: "file"
+        - name: QUEUE_CONNECTION
+          value: "database"
+        
+        # Mail config basique
+        - name: MAIL_MAILER
+          value: "log"
+        
+        # Filesystem
+        - name: FILESYSTEM_DISK
+          value: "local"
+        
+        # Laravel optimization
+        - name: LOG_CHANNEL
+          value: "stack"
+        - name: LOG_LEVEL
+          value: "error"
+        
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 90
+          periodSeconds: 60
+          timeoutSeconds: 10
+---
+# Service Mixpost PostgreSQL
+apiVersion: v1
+kind: Service
+metadata:
+  name: mixpost-postgresql-service
+  namespace: mixpost
+  labels:
+    app: mixpost-postgresql
+spec:
+  selector:
+    app: mixpost-postgresql
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  type: ClusterIP

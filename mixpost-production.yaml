@@ -1,0 +1,211 @@
+---
+# MySQL temporaire pour Mixpost (sera remplacé par PostgreSQL central plus tard)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-mixpost
+  namespace: mixpost
+  labels:
+    app: mysql-mixpost
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-mixpost
+  template:
+    metadata:
+      labels:
+        app: mysql-mixpost
+    spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: applications-pool
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        ports:
+        - containerPort: 3306
+        resources:
+          limits:
+            cpu: 150m
+            memory: 192Mi
+          requests:
+            cpu: 75m
+            memory: 96Mi
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "mixpost123"
+        - name: MYSQL_DATABASE
+          value: "mixpost"
+        - name: MYSQL_USER
+          value: "mixpost"
+        - name: MYSQL_PASSWORD
+          value: "mixpost123"
+        volumeMounts:
+        - name: mysql-data
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-data
+        emptyDir: {}
+---
+# Service MySQL
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: mixpost
+  labels:
+    app: mysql-mixpost
+spec:
+  selector:
+    app: mysql-mixpost
+  ports:
+  - port: 3306
+    targetPort: 3306
+  type: ClusterIP
+---
+# Mixpost Production avec MySQL
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mixpost-production
+  namespace: mixpost
+  labels:
+    app: mixpost-production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mixpost-production
+  template:
+    metadata:
+      labels:
+        app: mixpost-production
+    spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: applications-pool
+      containers:
+      - name: mixpost
+        image: inovector/mixpost:latest
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        env:
+        # App config
+        - name: APP_NAME
+          value: "Mixpost BlueOcean"
+        - name: APP_ENV
+          value: "production"
+        - name: APP_DEBUG
+          value: "false"
+        - name: APP_URL
+          value: "https://mixpost.blueocean.local"
+        - name: APP_KEY
+          value: "base64:M1xpost2025BlueOceanSecretKeyVeryLongForSecurity=="
+        
+        # Database MySQL
+        - name: DB_CONNECTION
+          value: "mysql"
+        - name: DB_HOST
+          value: "mysql"
+        - name: DB_PORT
+          value: "3306"
+        - name: DB_DATABASE
+          value: "mixpost"
+        - name: DB_USERNAME
+          value: "mixpost"
+        - name: DB_PASSWORD
+          value: "mixpost123"
+        
+        # Cache et session
+        - name: CACHE_DRIVER
+          value: "file"
+        - name: SESSION_DRIVER
+          value: "file"
+        - name: QUEUE_CONNECTION
+          value: "database"
+        
+        # Mail config basique
+        - name: MAIL_MAILER
+          value: "log"
+        
+        # Filesystem
+        - name: FILESYSTEM_DISK
+          value: "local"
+        
+        # Laravel optimization
+        - name: LOG_CHANNEL
+          value: "stack"
+        - name: LOG_LEVEL
+          value: "error"
+        
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 90
+          periodSeconds: 30
+          timeoutSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 120
+          periodSeconds: 60
+          timeoutSeconds: 10
+---
+# Service Mixpost Production
+apiVersion: v1
+kind: Service
+metadata:
+  name: mixpost-production-service
+  namespace: mixpost
+  labels:
+    app: mixpost-production
+spec:
+  selector:
+    app: mixpost-production
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  type: ClusterIP
+---
+# Ingress Mixpost Production
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mixpost-production-ingress
+  namespace: mixpost
+  labels:
+    app: mixpost-production
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - mixpost.blueocean.local
+    secretName: mixpost-production-tls
+  rules:
+  - host: mixpost.blueocean.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mixpost-production-service
+            port:
+              number: 80

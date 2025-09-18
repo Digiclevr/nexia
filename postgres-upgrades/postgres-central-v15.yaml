@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-central
+  namespace: platform
+  annotations:
+    upgrade.postgresql/version: "15-alpine"
+    upgrade.postgresql/date: "2025-09-17"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-central
+  serviceName: postgres-central
+  template:
+    metadata:
+      labels:
+        app: postgres-central
+        version: "15-alpine"
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: postgres-secret
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        # Configuration optimisée pour PostgreSQL 15
+        - name: POSTGRES_INITDB_ARGS
+          value: "--auth-host=md5 --encoding=UTF8 --locale=C"
+        resources:
+          limits:
+            cpu: "2"
+            memory: 4Gi
+          requests:
+            cpu: 500m
+            memory: 1Gi
+        # Health checks améliorés
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+            - -d
+            - postgres
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+            - -d
+            - postgres
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        startupProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+            - -d
+            - postgres
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 30
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgres-storage
+      nodeSelector:
+        pool: platform-pool
+      tolerations:
+      - effect: NoSchedule
+        key: database
+        value: "true"
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 100Gi
+      storageClassName: do-block-storage

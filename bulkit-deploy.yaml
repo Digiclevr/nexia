@@ -1,0 +1,300 @@
+---
+# Namespace pour Bulkit.dev
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bulkit
+  labels:
+    app: bulkit
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
+---
+# Secret pour Bulkit.dev
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bulkit-secrets
+  namespace: bulkit
+type: Opaque
+stringData:
+  POSTGRES_PASSWORD: "bulkit-password-2025"
+  REDIS_PASSWORD: "bulkit-redis-2025"
+  MINIO_ROOT_PASSWORD: "bulkit-minio-2025"
+  APP_KEY: "bulkit-app-key-2025-blueocean"
+---
+# ConfigMap pour Bulkit.dev
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bulkit-config
+  namespace: bulkit
+data:
+  # Database config - utilise PostgreSQL central
+  DATABASE_URL: "postgresql://bulkit:bulkit-password-2025@postgres-central.platform.svc.cluster.local:5432/bulkit"
+  POSTGRES_USER: "bulkit"
+  POSTGRES_DB: "bulkit"
+  
+  # Redis config - utilise Redis central
+  REDIS_URL: "redis://platform-pool-redis-master.platform.svc.cluster.local:6379"
+  REDIS_HOST: "platform-pool-redis-master.platform.svc.cluster.local"
+  REDIS_PORT: "6379"
+  
+  # App config
+  APP_ENV: "production"
+  APP_URL: "https://bulkit.blueocean.local"
+  
+  # Queue config
+  BULL_PREFIX: "bull"
+  
+  # Soketi WebSockets
+  SOKETI_HOST: "bulkit-soketi-service"
+  SOKETI_PORT: "6001"
+  SOKETI_APP_ID: "bulkit-app"
+  SOKETI_APP_KEY: "bulkit-key"
+  SOKETI_APP_SECRET: "bulkit-secret"
+---
+# Deployment API Bulkit.dev
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bulkit-api
+  namespace: bulkit
+  labels:
+    app: bulkit-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bulkit-api
+  template:
+    metadata:
+      labels:
+        app: bulkit-api
+    spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: applications-pool
+      initContainers:
+      - name: wait-for-db
+        image: postgres:15
+        command:
+        - sh
+        - -c
+        - |
+          until pg_isready -h postgres-central.platform.svc.cluster.local -p 5432 -U postgres; do
+            echo "Waiting for database..."
+            sleep 2
+          done
+      containers:
+      - name: api
+        image: registry.digitalocean.com/onlyoneapi/bulkit-api:latest
+        ports:
+        - containerPort: 3000
+        resources:
+          limits:
+            cpu: 300m
+            memory: 512Mi
+          requests:
+            cpu: 150m
+            memory: 256Mi
+        envFrom:
+        - configMapRef:
+            name: bulkit-config
+        - secretRef:
+            name: bulkit-secrets
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+---
+# Deployment App Bulkit.dev
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bulkit-app
+  namespace: bulkit
+  labels:
+    app: bulkit-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bulkit-app
+  template:
+    metadata:
+      labels:
+        app: bulkit-app
+    spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: applications-pool
+      containers:
+      - name: app
+        image: registry.digitalocean.com/onlyoneapi/bulkit-app:latest
+        ports:
+        - containerPort: 3000
+        resources:
+          limits:
+            cpu: 200m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        env:
+        - name: NEXT_PUBLIC_API_URL
+          value: "https://bulkit.blueocean.local/api"
+        - name: API_URL
+          value: "http://bulkit-api-service:3000"
+        envFrom:
+        - configMapRef:
+            name: bulkit-config
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+---
+# Deployment Soketi WebSockets
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bulkit-soketi
+  namespace: bulkit
+  labels:
+    app: bulkit-soketi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bulkit-soketi
+  template:
+    metadata:
+      labels:
+        app: bulkit-soketi
+    spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: applications-pool
+      containers:
+      - name: soketi
+        image: quay.io/soketi/soketi:latest-16-alpine
+        ports:
+        - containerPort: 6001
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        env:
+        - name: SOKETI_DEBUG
+          value: "0"
+        - name: SOKETI_DEFAULT_APP_ID
+          value: "bulkit-app"
+        - name: SOKETI_DEFAULT_APP_KEY
+          value: "bulkit-key"
+        - name: SOKETI_DEFAULT_APP_SECRET
+          value: "bulkit-secret"
+---
+# Service API
+apiVersion: v1
+kind: Service
+metadata:
+  name: bulkit-api-service
+  namespace: bulkit
+  labels:
+    app: bulkit-api
+spec:
+  selector:
+    app: bulkit-api
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
+  type: ClusterIP
+---
+# Service App
+apiVersion: v1
+kind: Service
+metadata:
+  name: bulkit-app-service
+  namespace: bulkit
+  labels:
+    app: bulkit-app
+spec:
+  selector:
+    app: bulkit-app
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
+  type: ClusterIP
+---
+# Service Soketi
+apiVersion: v1
+kind: Service
+metadata:
+  name: bulkit-soketi-service
+  namespace: bulkit
+  labels:
+    app: bulkit-soketi
+spec:
+  selector:
+    app: bulkit-soketi
+  ports:
+  - name: websocket
+    port: 6001
+    targetPort: 6001
+  type: ClusterIP
+---
+# Ingress pour Bulkit.dev
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bulkit-ingress
+  namespace: bulkit
+  labels:
+    app: bulkit
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - bulkit.blueocean.local
+    secretName: bulkit-tls
+  rules:
+  - host: bulkit.blueocean.local
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: bulkit-api-service
+            port:
+              number: 3000
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bulkit-app-service
+            port:
+              number: 3000

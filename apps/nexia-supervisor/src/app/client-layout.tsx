@@ -21,7 +21,15 @@ export default function ClientLayout({
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <div className="flex min-h-screen bg-gray-50">
+        <Sidebar />
+        <main className="flex-1 overflow-y-auto lg:ml-0 w-full pt-16 lg:pt-0">
+          {/* Responsive container with max density */}
+          <div className="w-full min-h-full">
+            {children}
+          </div>
+        </main>
+      </div>
     </QueryClientProvider>
   )
 }

@@ -1,0 +1,34 @@
+# Nouveaux PVC optimisés pour Mautic
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mautic-unified-pvc-new
+  namespace: unified-tools
+  labels:
+    app: mautic-unified
+    component: storage
+    version: optimized
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: do-block-storage
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mautic-kvibes-pvc-new
+  namespace: kvibes-dev
+  labels:
+    app: mautic
+    component: storage
+    version: optimized
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: do-block-storage
+  resources:
+    requests:
+      storage: 3Gi

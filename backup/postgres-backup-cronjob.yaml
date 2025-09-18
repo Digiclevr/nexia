@@ -1,0 +1,318 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backup-storage-credentials
+  namespace: platform
+type: Opaque
+data:
+  # À remplacer par vos vraies credentials DigitalOcean Spaces
+  access-key: REPLACE_WITH_BASE64_ACCESS_KEY
+  secret-key: REPLACE_WITH_BASE64_SECRET_KEY
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-scripts
+  namespace: platform
+data:
+  backup.sh: |
+    #!/bin/bash
+    set -e
+    
+    # Configuration
+    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    BACKUP_DIR="/tmp/backups"
+    S3_BUCKET="blueocean-postgres-backups"
+    S3_ENDPOINT="https://fra1.digitaloceanspaces.com"
+    
+    # Créer le répertoire de backup
+    mkdir -p $BACKUP_DIR
+    
+    # Function pour backup avec compression
+    backup_database() {
+        local host=$1
+        local port=$2
+        local database=$3
+        local username=$4
+        local password=$5
+        local instance_name=$6
+        
+        echo "Starting backup of $instance_name database: $database"
+        
+        # Backup avec pg_dump et compression
+        PGPASSWORD=$password pg_dump \
+            -h $host \
+            -p $port \
+            -U $username \
+            -d $database \
+            --verbose \
+            --no-password \
+            --format=custom \
+            --compress=9 \
+            --file="$BACKUP_DIR/${instance_name}_${database}_${TIMESTAMP}.dump"
+        
+        # Vérifier que le backup s'est bien passé
+        if [ $? -eq 0 ]; then
+            echo "Backup successful for $instance_name:$database"
+            
+            # Upload vers DigitalOcean Spaces
+            aws s3 cp "$BACKUP_DIR/${instance_name}_${database}_${TIMESTAMP}.dump" \
+                "s3://$S3_BUCKET/$instance_name/" \
+                --endpoint-url=$S3_ENDPOINT
+            
+            # Nettoyer le fichier local
+            rm -f "$BACKUP_DIR/${instance_name}_${database}_${TIMESTAMP}.dump"
+            
+            echo "Backup uploaded and local file cleaned for $instance_name:$database"
+        else
+            echo "Backup failed for $instance_name:$database"
+            exit 1
+        fi
+    }
+    
+    # Backup de l'instance centrale (postgres-central)
+    backup_database \
+        "postgres-central.platform.svc.cluster.local" \
+        "5432" \
+        "postgres" \
+        "postgres" \
+        "$POSTGRES_CENTRAL_PASSWORD" \
+        "postgres-central"
+    
+    # Backup des bases logiques sur postgres-central
+    for db in kvibe nextstep onlyoneapi; do
+        backup_database \
+            "postgres-central.platform.svc.cluster.local" \
+            "5432" \
+            "$db" \
+            "postgres" \
+            "$POSTGRES_CENTRAL_PASSWORD" \
+            "postgres-central"
+    done
+    
+    # Backup Kong
+    backup_database \
+        "postgres.kong.svc.cluster.local" \
+        "5432" \
+        "kong" \
+        "kong" \
+        "$POSTGRES_KONG_PASSWORD" \
+        "postgres-kong"
+    
+    # Nettoyage des anciens backups (garder 30 jours)
+    echo "Cleaning old backups (older than 30 days)"
+    aws s3 ls "s3://$S3_BUCKET/" --endpoint-url=$S3_ENDPOINT --recursive | \
+        awk '$1 <= "'$(date -d '30 days ago' '+%Y-%m-%d')'" {print $4}' | \
+        xargs -I {} aws s3 rm "s3://$S3_BUCKET/{}" --endpoint-url=$S3_ENDPOINT
+    
+    echo "Backup process completed successfully"
+  
+  restore.sh: |
+    #!/bin/bash
+    set -e
+    
+    # Script de restauration
+    # Usage: ./restore.sh <instance_name> <database> <backup_filename>
+    
+    INSTANCE_NAME=$1
+    DATABASE=$2
+    BACKUP_FILE=$3
+    S3_BUCKET="blueocean-postgres-backups"
+    S3_ENDPOINT="https://fra1.digitaloceanspaces.com"
+    RESTORE_DIR="/tmp/restore"
+    
+    if [ -z "$INSTANCE_NAME" ] || [ -z "$DATABASE" ] || [ -z "$BACKUP_FILE" ]; then
+        echo "Usage: $0 <instance_name> <database> <backup_filename>"
+        echo "Example: $0 postgres-central kvibe postgres-central_kvibe_20250917_120000.dump"
+        exit 1
+    fi
+    
+    mkdir -p $RESTORE_DIR
+    
+    # Télécharger le backup depuis DigitalOcean Spaces
+    echo "Downloading backup file: $BACKUP_FILE"
+    aws s3 cp "s3://$S3_BUCKET/$INSTANCE_NAME/$BACKUP_FILE" \
+        "$RESTORE_DIR/$BACKUP_FILE" \
+        --endpoint-url=$S3_ENDPOINT
+    
+    # Restaurer selon l'instance
+    case $INSTANCE_NAME in
+        "postgres-central")
+            HOST="postgres-central.platform.svc.cluster.local"
+            USERNAME="postgres"
+            PASSWORD="$POSTGRES_CENTRAL_PASSWORD"
+            ;;
+        "postgres-kong")
+            HOST="postgres.kong.svc.cluster.local"
+            USERNAME="kong"
+            PASSWORD="$POSTGRES_KONG_PASSWORD"
+            ;;
+        *)
+            echo "Unknown instance: $INSTANCE_NAME"
+            exit 1
+            ;;
+    esac
+    
+    echo "Restoring database $DATABASE on $INSTANCE_NAME"
+    
+    # Créer la base si elle n'existe pas
+    PGPASSWORD=$PASSWORD createdb -h $HOST -U $USERNAME $DATABASE 2>/dev/null || true
+    
+    # Restaurer
+    PGPASSWORD=$PASSWORD pg_restore \
+        -h $HOST \
+        -U $USERNAME \
+        -d $DATABASE \
+        --verbose \
+        --clean \
+        --if-exists \
+        --no-password \
+        "$RESTORE_DIR/$BACKUP_FILE"
+    
+    # Nettoyer
+    rm -f "$RESTORE_DIR/$BACKUP_FILE"
+    
+    echo "Restore completed successfully"
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup-central
+  namespace: platform
+spec:
+  schedule: "0 2 * * *"  # Tous les jours à 2h du matin
+  timeZone: "Europe/Paris"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: postgres-backup
+            target: postgres-central
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: backup
+            image: postgres:15-alpine
+            command: ["/bin/sh", "/scripts/backup.sh"]
+            env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: backup-storage-credentials
+                  key: access-key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backup-storage-credentials
+                  key: secret-key
+            - name: POSTGRES_CENTRAL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: postgres-password
+            - name: POSTGRES_KONG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+            volumeMounts:
+            - name: backup-scripts
+              mountPath: /scripts
+              readOnly: true
+            resources:
+              limits:
+                cpu: 500m
+                memory: 1Gi
+              requests:
+                cpu: 100m
+                memory: 256Mi
+          volumes:
+          - name: backup-scripts
+            configMap:
+              name: backup-scripts
+              defaultMode: 0755
+          nodeSelector:
+            pool: platform-pool
+          tolerations:
+          - effect: NoSchedule
+            key: database
+            value: "true"
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup-weekly
+  namespace: platform
+spec:
+  schedule: "0 1 * * 0"  # Tous les dimanches à 1h du matin
+  timeZone: "Europe/Paris"
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: postgres-backup
+            target: weekly-full
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: backup-weekly
+            image: postgres:15-alpine
+            command: 
+            - /bin/sh
+            - -c
+            - |
+              # Backup complet hebdomadaire avec métadonnées
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              echo "Starting weekly full backup at $TIMESTAMP"
+              
+              # Backup avec pg_dumpall pour avoir les rôles et permissions
+              PGPASSWORD=$POSTGRES_CENTRAL_PASSWORD pg_dumpall \
+                -h postgres-central.platform.svc.cluster.local \
+                -U postgres \
+                --verbose \
+                --clean \
+                | gzip > /tmp/postgres-central_full_${TIMESTAMP}.sql.gz
+              
+              # Upload vers DigitalOcean Spaces
+              aws s3 cp "/tmp/postgres-central_full_${TIMESTAMP}.sql.gz" \
+                "s3://blueocean-postgres-backups/weekly-full/" \
+                --endpoint-url=https://fra1.digitaloceanspaces.com
+              
+              echo "Weekly backup completed successfully"
+            env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: backup-storage-credentials
+                  key: access-key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backup-storage-credentials
+                  key: secret-key
+            - name: POSTGRES_CENTRAL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: postgres-password
+            resources:
+              limits:
+                cpu: 1
+                memory: 2Gi
+              requests:
+                cpu: 200m
+                memory: 512Mi
+          nodeSelector:
+            pool: platform-pool
+          tolerations:
+          - effect: NoSchedule
+            key: database
+            value: "true"

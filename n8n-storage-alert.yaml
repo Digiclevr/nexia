@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: n8n-storage-alerts
+  namespace: monitoring
+  labels:
+    app: prometheus
+    component: alerting-rules
+data:
+  n8n-storage-rules.yml: |
+    groups:
+    - name: n8n-storage-alerts
+      rules:
+      - alert: N8NStorageHighUsage
+        expr: |
+          (
+            1 - (
+              kubelet_volume_stats_available_bytes{job="kubelet", metrics_path="/metrics/cadvisor", namespace="unified-tools", persistentvolumeclaim="n8n-unified-pvc"}
+              /
+              kubelet_volume_stats_capacity_bytes{job="kubelet", metrics_path="/metrics/cadvisor", namespace="unified-tools", persistentvolumeclaim="n8n-unified-pvc"}
+            )
+          ) * 100 > 80
+        for: 2m
+        labels:
+          severity: warning
+          service: n8n
+          namespace: unified-tools
+          component: storage
+        annotations:
+          summary: "N8N storage usage is high"
+          description: |
+            N8N persistent volume usage is above 80%.
+            Current usage: {{ printf "%.1f" $value }}%
+            PVC: n8n-unified-pvc in namespace unified-tools
+            Available space: {{ with query "kubelet_volume_stats_available_bytes{namespace='unified-tools', persistentvolumeclaim='n8n-unified-pvc'}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+            Total capacity: {{ with query "kubelet_volume_stats_capacity_bytes{namespace='unified-tools', persistentvolumeclaim='n8n-unified-pvc'}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+          runbook_url: "https://nexia.blueocean.local/ecosystems/business-automation"
+          dashboard_url: "http://grafana.monitoring.svc.cluster.local/d/storage-overview"
+          
+      - alert: N8NStorageCriticalUsage  
+        expr: |
+          (
+            1 - (
+              kubelet_volume_stats_available_bytes{job="kubelet", metrics_path="/metrics/cadvisor", namespace="unified-tools", persistentvolumeclaim="n8n-unified-pvc"}
+              /
+              kubelet_volume_stats_capacity_bytes{job="kubelet", metrics_path="/metrics/cadvisor", namespace="unified-tools", persistentvolumeclaim="n8n-unified-pvc"}
+            )
+          ) * 100 > 90
+        for: 1m
+        labels:
+          severity: critical
+          service: n8n
+          namespace: unified-tools  
+          component: storage
+        annotations:
+          summary: "N8N storage usage is critically high"
+          description: |
+            N8N persistent volume usage is above 90% - URGENT ACTION REQUIRED.
+            Current usage: {{ printf "%.1f" $value }}%
+            PVC: n8n-unified-pvc in namespace unified-tools
+            Available space: {{ with query "kubelet_volume_stats_available_bytes{namespace='unified-tools', persistentvolumeclaim='n8n-unified-pvc'}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+            Total capacity: {{ with query "kubelet_volume_stats_capacity_bytes{namespace='unified-tools', persistentvolumeclaim='n8n-unified-pvc'}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+          runbook_url: "https://nexia.blueocean.local/ecosystems/business-automation"
+          dashboard_url: "http://grafana.monitoring.svc.cluster.local/d/storage-overview"
+          
+      - alert: N8NPodNotRunning
+        expr: |
+          kube_pod_status_phase{namespace="unified-tools", pod=~"n8n-unified-.*", phase!="Running"} == 1
+        for: 5m
+        labels:
+          severity: critical
+          service: n8n
+          namespace: unified-tools
+          component: availability
+        annotations:
+          summary: "N8N pod is not running"
+          description: |
+            N8N pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is not running.
+            Current phase: {{ $labels.phase }}
+            This affects all automation workflows.
+          runbook_url: "https://nexia.blueocean.local/ecosystems/business-automation"
