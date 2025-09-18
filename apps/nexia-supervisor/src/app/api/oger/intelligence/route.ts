@@ -163,7 +163,7 @@ async function processWithLocalIntelligence(content: string, source: string): Pr
           const result = JSON.parse(output);
           resolve(result);
         } catch (parseError) {
-          reject(new Error(`Failed to parse intelligence service output: ${parseError.message}`));
+          reject(new Error(`Failed to parse intelligence service output: ${parseError instanceof Error ? parseError.message : String(parseError)}`));
         }
       } else {
         reject(new Error(`Intelligence service failed: ${errorOutput}`));
