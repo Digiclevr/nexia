@@ -1,23 +1,35 @@
-import * as React from "react"
+import React from "react"
 import { clsx, type ClassValue } from "clsx"
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs)
 }
 
-const Card = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-lg border bg-white text-slate-950 shadow-sm",
-      className
-    )}
-    {...props}
-  />
-))
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  hover?: boolean
+  clickable?: boolean
+  padding?: 'sm' | 'md' | 'lg'
+}
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, hover, clickable, padding = 'md', ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "rounded-lg border bg-white text-slate-950 shadow-sm",
+          hover && "hover:shadow-md transition-shadow duration-200",
+          clickable && "cursor-pointer hover:shadow-lg",
+          padding === 'sm' && "p-3",
+          padding === 'md' && "p-4",
+          padding === 'lg' && "p-6",
+          className
+        )}
+        {...props}
+      />
+    )
+  }
+)
 Card.displayName = "Card"
 
 const CardHeader = React.forwardRef<

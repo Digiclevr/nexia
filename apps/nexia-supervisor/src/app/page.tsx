@@ -30,6 +30,9 @@ import { Card, CardHeader, CardContent } from '@/components/ui/Card'
 import { ResponsiveGrid, ResponsiveContainer } from '@/components/ui/ResponsiveContainer'
 import { useResponsive } from '@/hooks/useResponsive'
 
+// Import VoiceControl component
+import { VoiceControl } from '@/components/VoiceControl'
+
 export default function DashboardPage() {
   const { currentTime } = useCurrentTime()
   const { isMobile, isTablet } = useResponsive()
@@ -144,6 +147,19 @@ export default function DashboardPage() {
             </Card>
           ))}
         </ResponsiveGrid>
+      </SectionLayout>
+
+      {/* Voice Control Section */}
+      <SectionLayout variant="ghost">
+        <VoiceControl 
+          className="w-full"
+          compact={isMobile}
+          showTranscription={true}
+          onVoiceCommand={(command) => {
+            console.log('Voice command received:', command)
+            // Handle voice commands that might trigger navigation or actions
+          }}
+        />
       </SectionLayout>
 
       {/* Main Grid */}

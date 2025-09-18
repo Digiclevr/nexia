@@ -18,7 +18,11 @@ import {
   Wifi,
   HardDrive,
   Cpu,
-  RefreshCw
+  RefreshCw,
+  Zap,
+  TrendingUp,
+  Shield,
+  BarChart3
 } from 'lucide-react'
 
 export default function StatusPage() {
@@ -119,131 +123,215 @@ export default function StatusPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      {/* Header Compact */}
-      <header className="bg-white border-b border-gray-200 flex-shrink-0">
-        <div className="flex items-center justify-between px-2 lg:px-4 py-2">
-          <div className="flex items-center min-w-0">
-            <Activity className="h-4 w-4 lg:h-5 lg:w-5 text-blue-600 mr-2" />
-            <div className="min-w-0">
-              <h1 className="text-sm lg:text-lg font-semibold text-gray-900 truncate">Status Écosystème</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      {/* Modern Header with Gradient */}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl">
+                  <Activity className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                    NEXIA Status
+                  </h1>
+                  <p className="text-sm text-gray-500">Supervision Écosystème Multi-Platform</p>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs text-gray-500">{currentTime}</p>
+            
+            <div className="flex items-center space-x-4">
+              <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-600">
+                <Clock className="h-4 w-4" />
+                <span>{currentTime}</span>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1 px-3 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span>Système Opérationnel</span>
+                </div>
+                
+                <button 
+                  className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
+                  onClick={() => window.location.reload()}
+                >
+                  <RefreshCw className="h-5 w-5" />
+                </button>
+              </div>
             </div>
-            <button className="px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100">
-              <RefreshCw className="h-3 w-3 mr-1 inline" />
-              Refresh
-            </button>
           </div>
         </div>
       </header>
 
-      {/* Main Content - No Scroll Layout */}
-      <div className="flex-1 overflow-hidden p-2 lg:p-3">
+      {/* Main Dashboard Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* Global Status + Ecosystems */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 mb-2 h-1/3">
-          
-          {/* Global Status Compact */}
-          <div className="bg-white border border-gray-200 rounded p-2">
-            <div className="flex items-center justify-between h-full">
-              <div className="flex items-center min-w-0">
-                <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                <div className="min-w-0">
-                  <h2 className="text-sm font-semibold text-gray-900 truncate">État Global</h2>
-                  <p className="text-xs text-gray-600">Systèmes opérationnels</p>
-                </div>
+        {/* Hero Status Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Uptime Global</p>
+                <p className="text-3xl font-bold text-green-600">99.7%</p>
+                <p className="text-sm text-gray-500 mt-1">Dernières 30 jours</p>
               </div>
-              <div className="text-right">
-                <p className="text-lg font-bold text-green-600">99.6%</p>
-                <p className="text-xs text-gray-500">Uptime</p>
+              <div className="p-3 bg-green-100 rounded-xl">
+                <TrendingUp className="h-6 w-6 text-green-600" />
               </div>
             </div>
           </div>
 
-          {/* Quick Ecosystem Status */}
-          {ecosystemsStatus.slice(0, 2).map((ecosystem, index) => (
-            <div key={index} className="bg-white border border-gray-200 rounded p-2">
-              <div className="flex items-center justify-between h-full">
-                <div className="flex items-center min-w-0">
-                  <div className={`p-1.5 rounded bg-${ecosystem.color}-100 mr-2 flex-shrink-0`}>
-                    {React.cloneElement(ecosystem.icon, { className: 'h-3 w-3' })}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Écosystèmes</p>
+                <p className="text-3xl font-bold text-blue-600">4</p>
+                <p className="text-sm text-gray-500 mt-1">Systèmes actifs</p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <Globe className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Services Totaux</p>
+                <p className="text-3xl font-bold text-purple-600">38</p>
+                <p className="text-sm text-gray-500 mt-1">Microservices déployés</p>
+              </div>
+              <div className="p-3 bg-purple-100 rounded-xl">
+                <Server className="h-6 w-6 text-purple-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Sécurité</p>
+                <p className="text-3xl font-bold text-emerald-600">100%</p>
+                <p className="text-sm text-gray-500 mt-1">Toutes défenses actives</p>
+              </div>
+              <div className="p-3 bg-emerald-100 rounded-xl">
+                <Shield className="h-6 w-6 text-emerald-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Ecosystems Status Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {ecosystemsStatus.map((ecosystem, index) => (
+            <div key={index} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-4">
+                  <div className={`p-3 bg-${ecosystem.color}-100 rounded-xl`}>
+                    {React.cloneElement(ecosystem.icon, { 
+                      className: `h-6 w-6 text-${ecosystem.color}-600` 
+                    })}
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-gray-900 truncate">{ecosystem.name}</h3>
-                    <p className="text-xs text-gray-500 truncate">{ecosystem.services} services</p>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{ecosystem.name}</h3>
+                    <p className="text-sm text-gray-500">{ecosystem.description}</p>
                   </div>
                 </div>
-                <div className="flex items-center">
+                
+                <div className="flex items-center space-x-2">
                   {getStatusIcon(ecosystem.status)}
-                  <span className={`ml-1 px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(ecosystem.status)}`}>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(ecosystem.status)}`}>
                     {getStatusText(ecosystem.status)}
                   </span>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Detailed Ecosystems Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2 h-1/3">
-          {ecosystemsStatus.map((ecosystem, index) => (
-            <div key={index} className="bg-white border border-gray-200 rounded p-2">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center min-w-0">
-                  <div className={`p-1.5 rounded bg-${ecosystem.color}-100 mr-2 flex-shrink-0`}>
-                    {React.cloneElement(ecosystem.icon, { className: 'h-4 w-4' })}
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-gray-900 truncate">{ecosystem.name}</h3>
-                    <p className="text-xs text-gray-500 truncate">{ecosystem.description}</p>
-                  </div>
-                </div>
-                {getStatusIcon(ecosystem.status)}
-              </div>
               
-              <div className="grid grid-cols-2 gap-2 mb-2">
-                <div>
-                  <p className="text-xs text-gray-500">Services</p>
-                  <p className="text-sm font-semibold text-gray-900">{ecosystem.services}</p>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="text-center p-3 bg-gray-50 rounded-xl">
+                  <p className="text-sm text-gray-600">Services</p>
+                  <p className="text-xl font-bold text-gray-900">{ecosystem.services}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500">Uptime</p>
-                  <p className="text-sm font-semibold text-green-600">{ecosystem.uptime}</p>
+                <div className="text-center p-3 bg-gray-50 rounded-xl">
+                  <p className="text-sm text-gray-600">Uptime</p>
+                  <p className="text-xl font-bold text-green-600">{ecosystem.uptime}</p>
+                </div>
+                <div className="text-center p-3 bg-gray-50 rounded-xl">
+                  <p className="text-sm text-gray-600">Check</p>
+                  <p className="text-sm font-medium text-gray-700">{ecosystem.lastCheck}</p>
                 </div>
               </div>
               
-              <div className="border-t border-gray-200 pt-1">
-                <p className="text-xs text-gray-500 truncate">{ecosystem.url}</p>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <span className="text-sm text-gray-600">Endpoint:</span>
+                <code className="text-sm font-mono text-gray-800 bg-white px-2 py-1 rounded">
+                  {ecosystem.url}
+                </code>
               </div>
             </div>
           ))}
         </div>
 
-        {/* System Metrics - Dense Grid */}
-        <div className="h-1/3">
-          <h2 className="text-sm font-semibold text-gray-900 mb-1">Métriques Système</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 h-full">
+        {/* System Metrics Modern Grid */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-gray-100 rounded-lg">
+                <BarChart3 className="h-5 w-5 text-gray-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900">Métriques Infrastructure</h2>
+            </div>
+            <div className="text-sm text-gray-500">Temps réel</div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {systemMetrics.map((metric, index) => (
-              <div key={index} className="bg-white border border-gray-200 rounded p-2">
-                <div className="flex items-center justify-between h-full">
-                  <div className="flex items-center min-w-0">
-                    {React.cloneElement(metric.icon, { className: 'h-4 w-4 mr-2 flex-shrink-0' })}
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-gray-900 truncate">{metric.name}</p>
-                      <p className="text-sm font-bold text-gray-700">{metric.value}</p>
+              <div key={index} className="p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-50 rounded-lg">
+                      {React.cloneElement(metric.icon, { className: 'h-5 w-5 text-blue-600' })}
                     </div>
+                    <h3 className="font-medium text-gray-900">{metric.name}</h3>
                   </div>
                   {getStatusIcon(metric.status)}
+                </div>
+                
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{metric.value}</p>
+                    <p className="text-sm text-gray-500">Performance</p>
+                  </div>
+                  
+                  {/* Mini progress bar */}
+                  <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full ${
+                        metric.status === 'healthy' ? 'bg-green-500' : 
+                        metric.status === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}
+                      style={{ width: metric.value }}
+                    ></div>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
-      </div>
+
+        {/* Footer Info */}
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-500">
+            🕐 <strong>Paris:</strong> {currentTime.split('|')[0]?.trim() || currentTime} | 
+            <strong> USA:</strong> {currentTime.split('|')[1]?.trim() || 'Calcul en cours...'}
+          </p>
+          <p className="text-xs text-gray-400 mt-2">
+            NEXIA Meta-Orchestrateur • Supervision en temps réel • Auto-refresh 5s
+          </p>
+        </div>
+      </main>
     </div>
   )
 }
