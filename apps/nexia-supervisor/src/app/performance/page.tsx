@@ -344,6 +344,7 @@ export default function PerformancePage() {
                 Axe Y: Temps de réponse (ms) • Mise à jour toutes les 5 minutes
               </div>
             </div>
+          </div>
         </div>
   )
 }
