@@ -11,6 +11,7 @@
     "noUnusedParameters": false,
     "exactOptionalPropertyTypes": false,
     "forceConsistentCasingInFileNames": false,
+    "noCheck": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
