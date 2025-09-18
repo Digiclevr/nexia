@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
       - name: nexia-supervisor
-        image: registry.digitalocean.com/nexia/nexia-supervisor:dev-latest
+        image: registry.digitalocean.com/blueocean/nexia-supervisor:dev-latest
         ports:
         - containerPort: 7010
           name: http
