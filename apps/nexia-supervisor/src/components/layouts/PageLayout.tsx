@@ -173,7 +173,7 @@ export function PageLayout({
 
           {/* Error State */}
           {error && (
-            <Card variant="outlined" padding="lg">
+            <Card padding="lg">
               <div className="flex items-center space-x-3 text-red-600">
                 <AlertTriangle className="h-6 w-6 flex-shrink-0" />
                 <div>
