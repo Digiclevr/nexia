@@ -303,7 +303,7 @@ export function DataTable<T extends Record<string, any>>({
   }
 
   return (
-    <Card className={className} padding="none">
+    <Card className={className}>
       {/* Header with search and filters */}
       {(search.enabled || filters.enabled) && (
         <div className="p-4 border-b border-gray-200">
