@@ -192,7 +192,7 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded-full ${getStatusColorText(status as any)}`}>
-                  {status}
+                  {status as string}
                 </span>
               </div>
             ))}
