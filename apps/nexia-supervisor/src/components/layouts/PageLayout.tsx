@@ -188,7 +188,7 @@ export function PageLayout({
           {loading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
-                <Card key={i} loading />
+                <Card key={i} className="animate-pulse bg-gray-100 h-20" />
               ))}
             </div>
           ) : (
