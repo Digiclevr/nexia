@@ -81,7 +81,7 @@ export default function DashboardPage() {
     },
     { 
       label: 'Services Actifs', 
-      value: blueOceanApps.filter(app => app.status === 'running').length, 
+      value: blueOceanApps.filter((app: any) => app.status === 'running').length, 
       icon: Server,
       color: 'text-green-600'
     },
