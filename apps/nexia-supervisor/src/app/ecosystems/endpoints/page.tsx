@@ -282,7 +282,7 @@ export default function EndpointsPage() {
             Dernières Découvertes
           </h3>
           <div className="space-y-4">
-            {finalData.recentFindings.map((finding) => (
+            {finalData.recentFindings.map((finding: any) => (
               <div key={finding.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">

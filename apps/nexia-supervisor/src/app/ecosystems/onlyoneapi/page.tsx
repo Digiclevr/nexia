@@ -1,239 +1,118 @@
 'use client'
 
-import { 
-  Database,
-  Activity,
-  Server,
-  Globe,
-  Users,
-  TrendingUp,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Clock,
-  RefreshCw,
-  DollarSign,
-  BarChart3,
-  Zap,
-  Eye,
-  Monitor
-} from 'lucide-react'
+import React from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
 import { nexiaApi } from '@/lib/api'
 import { useCurrentTime } from '@/hooks/useCurrentTime'
+import { 
+  Activity, 
+  CheckCircle, 
+  XCircle, 
+  AlertTriangle,
+  Clock,
+  Server,
+  Database,
+  Globe,
+  Users,
+  Brain,
+  Wifi,
+  HardDrive,
+  Cpu,
+  RefreshCw,
+  Zap,
+  TrendingUp,
+  Shield,
+  BarChart3,
+  DollarSign,
+  ExternalLink,
+  Code,
+  Gauge,
+  Target
+} from 'lucide-react'
 
 export default function OnlyOneAPIPage() {
   const { currentTime } = useCurrentTime()
-  const [selectedSite, setSelectedSite] = useState<string | null>(null)
-  
-  // Fetch OnlyOneAPI ecosystem data
-  const { data: onlyOneAPIData, isLoading } = useQuery({
-    queryKey: ['onlyoneapi-ecosystem'],
+  // Fetch OnlyOneAPI ecosystem status
+  const { data: ecosystemHealth, isLoading } = useQuery({
+    queryKey: ['ecosystem-health'],
     queryFn: () => nexiaApi.fetchEcosystemHealth(),
     refetchInterval: 5000,
     retry: 3,
     retryDelay: 1000
   });
 
+  const health = ecosystemHealth?.data || {};
+
   const onlyOneAPISites = [
     {
-      id: 'marketing',
       name: 'OnlyOneAPI Marketing',
-      description: 'Site vitrine principal & landing pages',
-      status: 'healthy',
-      url: 'https://onlyoneapi.com',
-      port: 9080,
+      status: health.onlyoneapi || 'unknown',
+      description: 'Site vitrine principal 401 endpoints',
+      url: 'api.onlyoneapi.com',
+      services: 5,
       uptime: '99.8%',
-      traffic: '15.2k visits/day',
-      conversion: '3.2%',
-      revenue: '€2,850/month',
-      lighthouse: 95,
-      pagespeed: '1.2s',
-      endpoints: 271,
-      version: 'v3.1.2',
-      lastDeploy: '2h ago',
-      framework: 'Next.js 15'
+      lastCheck: '15s ago',
+      icon: <Globe className="h-6 w-6" />,
+      color: 'green',
+      port: 9080,
+      revenue: '€42,000/mois',
+      growth: '+12%',
+      clients: 89
     },
     {
-      id: 'developer',
       name: 'Developer Portal',
-      description: 'Documentation API & outils développeurs',
-      status: 'healthy',
-      url: 'https://developer.onlyoneapi.com',
-      port: 9082,
+      status: health.onlyoneapi || 'unknown',
+      description: 'Documentation & API Tools',
+      url: 'developer.onlyoneapi.com',
+      services: 3,
       uptime: '99.9%',
-      traffic: '8.7k visits/day',
-      conversion: '12.5%',
-      revenue: '€1,240/month',
-      lighthouse: 98,
-      pagespeed: '0.8s',
-      endpoints: 271,
-      version: 'v2.4.1',
-      lastDeploy: '4h ago',
-      framework: 'Next.js 15'
+      lastCheck: '10s ago',
+      icon: <Code className="h-6 w-6" />,
+      color: 'blue',
+      port: 9082,
+      revenue: '€15,000/mois',
+      growth: '+8%',
+      clients: 156
     },
     {
-      id: 'portal',
       name: 'Customer Portal',
-      description: 'Interface client & dashboard B2B',
-      status: 'healthy',
-      url: 'https://portal.onlyoneapi.com',
-      port: 9081,
+      status: health.onlyoneapi || 'unknown',
+      description: 'Interface client B2B',
+      url: 'portal.onlyoneapi.com',
+      services: 4,
       uptime: '99.6%',
-      traffic: '4.1k visits/day',
-      conversion: '8.7%',
-      revenue: '€1,950/month',
-      lighthouse: 92,
-      pagespeed: '1.1s',
-      endpoints: 271,
-      version: 'v2.8.3',
-      lastDeploy: '6h ago',
-      framework: 'Next.js 15'
+      lastCheck: '25s ago',
+      icon: <Users className="h-6 w-6" />,
+      color: 'purple',
+      port: 9081,
+      revenue: '€28,000/mois',
+      growth: '+15%',
+      clients: 47
     },
     {
-      id: 'community',
       name: 'Community Hub',
+      status: 'warning',
       description: 'Forum & support communautaire',
-      status: 'warning',
-      url: 'https://community.onlyoneapi.com',
-      port: 9083,
+      url: 'community.onlyoneapi.com',
+      services: 2,
       uptime: '98.9%',
-      traffic: '2.8k visits/day',
-      conversion: '5.1%',
-      revenue: '€740/month',
-      lighthouse: 89,
-      pagespeed: '1.8s',
-      endpoints: 271,
-      version: 'v1.9.7',
-      lastDeploy: '1d ago',
-      framework: 'Next.js 15'
+      lastCheck: '45s ago',
+      icon: <Brain className="h-6 w-6" />,
+      color: 'orange',
+      port: 9083,
+      revenue: '€8,500/mois',
+      growth: '+5%',
+      clients: 234
     }
   ]
 
-  const apiMetrics = [
-    {
-      name: 'API Endpoints',
-      value: '271',
-      status: 'healthy',
-      trend: '+12',
-      icon: <Database className="h-5 w-5" />,
-      description: 'Endpoints commercialisés'
-    },
-    {
-      name: 'Requests/min',
-      value: '8.2k',
-      status: 'healthy',
-      trend: '+15%',
-      icon: <Activity className="h-5 w-5" />,
-      description: 'Trafic API temps réel'
-    },
-    {
-      name: 'Clients B2B',
-      value: '47',
-      status: 'healthy',
-      trend: '+3',
-      icon: <Users className="h-5 w-5" />,
-      description: 'Comptes actifs'
-    },
-    {
-      name: 'Revenue ARR',
-      value: '€82k',
-      status: 'healthy',
-      trend: '+22%',
-      icon: <DollarSign className="h-5 w-5" />,
-      description: 'Recurring revenue'
-    },
-    {
-      name: 'API Latency',
-      value: '89ms',
-      status: 'healthy',
-      trend: '-5ms',
-      icon: <Zap className="h-5 w-5" />,
-      description: 'Temps de réponse moyen'
-    },
-    {
-      name: 'Error Rate',
-      value: '0.2%',
-      status: 'healthy',
-      trend: '-0.1%',
-      icon: <AlertTriangle className="h-5 w-5" />,
-      description: 'Taux d\'erreur'
-    }
-  ]
-
-  const businessMetrics = [
-    {
-      category: 'Revenue',
-      current: '€6,780',
-      target: '€8,500',
-      progress: 79.8,
-      trend: '+12.3%'
-    },
-    {
-      category: 'Traffic',
-      current: '31.2k',
-      target: '35k',
-      progress: 89.1,
-      trend: '+8.7%'
-    },
-    {
-      category: 'Conversion',
-      current: '6.9%',
-      target: '8%',
-      progress: 86.3,
-      trend: '+1.2%'
-    },
-    {
-      category: 'Clients',
-      current: '47',
-      target: '60',
-      progress: 78.3,
-      trend: '+6.4%'
-    }
-  ]
-
-  const recentActivity = [
-    {
-      id: 1,
-      timestamp: '14:30:22',
-      event: 'Nouveau client B2B inscrit',
-      type: 'business',
-      status: 'success',
-      details: 'TechCorp Solutions - Plan Enterprise'
-    },
-    {
-      id: 2,
-      timestamp: '14:25:15',
-      event: 'Marketing site deployed',
-      type: 'deployment',
-      status: 'success',
-      details: 'v3.1.2 - Performance optimizations'
-    },
-    {
-      id: 3,
-      timestamp: '14:20:44',
-      event: 'API quota exceeded',
-      type: 'alert',
-      status: 'warning',
-      details: 'Client ID: 4571 - Daily limit reached'
-    },
-    {
-      id: 4,
-      timestamp: '14:15:33',
-      event: 'Community performance issue',
-      type: 'performance',
-      status: 'warning',
-      details: 'Page load time increased to 1.8s'
-    },
-    {
-      id: 5,
-      timestamp: '14:12:10',
-      event: 'API documentation updated',
-      type: 'content',
-      status: 'success',
-      details: '12 nouveaux endpoints documentés'
-    }
+  const systemMetrics = [
+    { name: 'API Gateway', status: 'healthy', value: '99.8%', icon: <Activity className="h-5 w-5" /> },
+    { name: 'Base de Données', status: 'healthy', value: '99.9%', icon: <Database className="h-5 w-5" /> },
+    { name: 'CDN Global', status: 'healthy', value: '99.7%', icon: <Globe className="h-5 w-5" /> },
+    { name: 'Load Balancer', status: 'warning', value: '97.2%', icon: <Server className="h-5 w-5" /> },
+    { name: 'SSL Certificates', status: 'healthy', value: '100%', icon: <Shield className="h-5 w-5" /> },
+    { name: 'Monitoring', status: 'healthy', value: '99.6%', icon: <Gauge className="h-5 w-5" /> }
   ]
 
   const getStatusIcon = (status: string) => {
